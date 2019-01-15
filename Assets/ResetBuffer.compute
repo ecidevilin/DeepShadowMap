@@ -1,0 +1,20 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel KernelResetHeaderList
+#pragma kernel KernelResetLinkedList
+#include "DeepShadowMap.cginc"
+RWStructuredBuffer<HeaderNode> HeaderList;
+RWStructuredBuffer<LinkedNode> LinkedList;
+
+[numthreads(8,8,1)]
+void KernelResetHeaderList(uint3 id : SV_DispatchThreadID)
+{
+	HeaderList[id.y * Dimension + id.x].start = -1;
+}
+
+
+[numthreads(1,1,1)]
+void KernelResetLinkedList(uint3 id : SV_DispatchThreadID)
+{
+	int counter = LinkedList.DecrementCounter();
+	LinkedList[counter] = (LinkedNode)0;
+}

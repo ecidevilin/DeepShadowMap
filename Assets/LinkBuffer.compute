@@ -1,0 +1,83 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel KernelLinkDeepShadowMap
+
+#include "DeepShadowMap.cginc"
+StructuredBuffer<HeaderNode> HeaderList;
+StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
+RWStructuredBuffer<NeighborsNode> NeighborsList;
+
+
+[numthreads(8,8,1)]
+void KernelLinkDeepShadowMap(uint3 id : SV_DispatchThreadID)
+{
+	if (id.y > Dimension - 1 || id.x > Dimension - 1)
+	{
+		return;
+	}
+	int currentCenter = HeaderList[id.y * Dimension + id.x].start;
+	if (-1 == currentCenter)
+	{
+		return;
+	}
+	int currentRight, currentTop;
+	if (id.x != Dimension - 1)
+	{
+		currentRight = HeaderList[id.y * Dimension + id.x + 1].start;
+	}
+	else
+	{
+		currentRight = -1;
+	}
+	if (id.y != 0)
+	{
+		currentTop = HeaderList[(id.y + 1) * Dimension + id.x].start;
+	}
+	else
+	{
+		currentTop = -1;
+	}
+	
+	DoublyLinkedNode currentEntryRight; 
+	if(currentRight != -1)
+		currentEntryRight = DoublyLinkedList[currentRight];
+	DoublyLinkedNode currentEntryTop;
+	if(currentTop != -1)
+		currentEntryTop = DoublyLinkedList[currentTop];
+
+	DoublyLinkedNode tempListEntry;
+
+	float depth;
+	int j;
+	for (int i = 0; i < NUM_BUF_ELEMENTS; i++)
+	{
+		depth = DoublyLinkedList[currentCenter].depth;
+		for (j = 0; j < NUM_BUF_ELEMENTS; j++)
+		{
+			if(currentRight == -1 || currentEntryRight.next == -1)
+				break;
+			tempListEntry = DoublyLinkedList[currentEntryRight.next];
+			if(depth < tempListEntry.depth)
+				break;
+			currentRight = currentEntryRight.next;
+			currentEntryRight = tempListEntry;
+		}
+		
+		NeighborsList[currentCenter].right = currentRight;
+		
+		for(j = 0; j < NUM_BUF_ELEMENTS; j++)
+		{
+			if(currentTop == -1 || currentEntryTop.next == -1)
+				break;
+			tempListEntry = DoublyLinkedList[currentEntryTop.next];
+			if(depth < tempListEntry.depth)
+				break;
+			currentTop = currentEntryTop.next;
+			currentEntryTop = tempListEntry;
+		}
+		NeighborsList[currentCenter].top = currentTop;
+		
+		currentCenter = DoublyLinkedList[currentCenter].next;
+		if(currentCenter == -1)
+			break;
+	}
+}

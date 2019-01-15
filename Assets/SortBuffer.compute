@@ -1,0 +1,91 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel KernelSortDeepShadowMap
+
+#include "DeepShadowMap.cginc"
+StructuredBuffer<HeaderNode> HeaderList;
+StructuredBuffer<LinkedNode> LinkedList;
+RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
+
+struct LocalListEntry
+{
+	float depth;
+	float alpha;
+};
+
+[numthreads(8,8,1)]
+void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
+{
+	if (id.y > Dimension - 1 || id.x > Dimension - 1)
+	{
+		return;
+	}
+	LocalListEntry list[NUM_BUF_ELEMENTS];
+	int nextPoints[NUM_BUF_ELEMENTS];
+
+	int current;
+	LocalListEntry temp;
+	int start = HeaderList[id.y * Dimension + id.x].start;
+	if (start == -1)
+	{
+		return;
+	}
+	current = start;
+	int numElems = 0;
+	int i;
+	for (i = 0; i < NUM_BUF_ELEMENTS; i++)
+	{
+		numElems++;
+		list[i].depth = LinkedList[current].depth;
+		list[i].alpha = LinkedList[current].alpha;
+		nextPoints[i] = LinkedList[current].next;
+		if (nextPoints[i] == -1)
+		{
+			break;
+		}
+		current = nextPoints[i];
+	}
+	nextPoints[NUM_BUF_ELEMENTS - 1] = -1;
+
+	int j;
+	for (i = 1; i < numElems; i++)
+	{
+		temp = list[i];
+		j = i - 1;
+		[loop]
+		while (temp.depth < list[j].depth && j >= 0)
+		{
+			list[j + 1] = list[j];
+			j = j - 1;
+		}
+		list[j + 1] = temp;
+	}
+
+	float shadingBefore = 1.0;
+	for (i = 0; i < numElems; i++)
+	{
+		float shadingCurrent = shadingBefore * (1.0 - list[i].alpha);
+		if (shadingBefore - shadingCurrent > 0.001)
+		{
+			shadingBefore = shadingCurrent;
+			list[i].alpha = shadingCurrent;
+		}
+		else{
+			numElems = i;
+			nextPoints[i - 1] = -1;
+			break;
+		}
+	}
+
+	int prev = -1;
+	current = start;
+	for (i = 0; i < numElems; i++)
+	{
+		DoublyLinkedList[current].depth = list[i].depth;
+		DoublyLinkedList[current].next = nextPoints[i];
+		DoublyLinkedList[current].shading = list[i].alpha;
+		DoublyLinkedList[current].prev = prev;
+		prev = current;
+		current = nextPoints[i];
+	}
+}
+
