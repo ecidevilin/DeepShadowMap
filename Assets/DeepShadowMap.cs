@@ -236,7 +236,7 @@ public class DeepShadowMap : MonoBehaviour
         lightMatrix.SetRow(2, -forward);
         BeforeForwardOpaque.SetViewMatrix(lightMatrix);
 
-        Matrix4x4 projMatrix = Matrix4x4.Ortho(-10, 10, -10, 10, 0.1f, 10);
+        Matrix4x4 projMatrix = Matrix4x4.Ortho(-20, 20, -20, 20, 0.1f, 30);
         BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
 
         BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
@@ -248,7 +248,7 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
         BeforeForwardOpaque.SetProjectionMatrix(camera.projectionMatrix);
         BeforeForwardOpaque.SetGlobalVector("CameraPos", camera.transform.position);
-        BeforeForwardOpaque.SetGlobalVector("LightPos", DirectionalLight.transform.position);
+        BeforeForwardOpaque.SetGlobalVector("LightDir", DirectionalLight.transform.forward);
     }
 
     private void RecycleFunc()

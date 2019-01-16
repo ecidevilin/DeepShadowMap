@@ -39,7 +39,7 @@
 
 			float4x4 _LightVP;
             float3 CameraPos;
-            float3 LightPos;
+            float3 LightDir;
 
 
 			float logConv(float w0, float d1, float w1, float d2)
@@ -49,7 +49,7 @@
             float CalculateKajiyaKay(float3 tangent, float3 posInWorld)
             {
                 float3 eye = normalize(CameraPos - posInWorld);
-                float3 light = normalize(LightPos - posInWorld);
+                float3 light = normalize(LightDir);
                 
                 float diffuse = sin(acos(dot(tangent, light)));
                 float specular = pow(dot(tangent, light) * dot(tangent, eye) + sin(acos(dot(light, tangent))) * sin(acos(dot(tangent, eye))), 6.0f);
