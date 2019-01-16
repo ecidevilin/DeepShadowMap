@@ -28,4 +28,3 @@ struct NeighborsNode
 #define ZFAR 1000.0f
 
 uint Dimension;
-StructuredBuffer<NeighborsNode> NeighborsBufRO;
