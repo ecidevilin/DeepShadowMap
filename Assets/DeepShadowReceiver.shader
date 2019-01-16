@@ -7,7 +7,7 @@
     {
         Tags { "RenderType"="Opaque" }
         LOD 100
-
+		Cull Off
         Pass
         {
             CGPROGRAM
@@ -218,7 +218,6 @@
                     else
                         noXLink = true;
                 }
-
             #if FILTER_SIZE > 0
                 float depthSamples2[2][FILTER_SIZE * 2 + 2];
                 float shadingSamples2[2][FILTER_SIZE * 2 + 2];

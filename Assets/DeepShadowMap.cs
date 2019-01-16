@@ -115,7 +115,14 @@ public class DeepShadowMap : MonoBehaviour
     private int KernelSortDeepShadowMap;
     private int KernelLinkDeepShadowMap;
 
-    public float Test = 1;
+    [Range(0, 1)]
+    public float HairAlpha = 0.7f;
+
+    public ComputeShader TestBuffer;
+    private int KernelTestBuffer;
+    public RenderTexture TestRt;
+    [Range(0, 49)]
+    public int TestIndex;
 
     public Material ReceiverMaterial;
 
@@ -139,7 +146,7 @@ public class DeepShadowMap : MonoBehaviour
         mat.SetInt("Dimension", dimension);
         mat.SetBuffer("HeaderList", HeaderList);
         mat.SetBuffer("LinkedList", LinkedList);
-        mat.SetFloat("_Alpha", 0.8f);
+        mat.SetFloat("_Alpha", HairAlpha);
 
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
         ResetBuffer.SetBuffer(KernelResetHeaderList, "HeaderList", HeaderList);
@@ -158,8 +165,8 @@ public class DeepShadowMap : MonoBehaviour
         KernelLinkDeepShadowMap = LinkBuffer.FindKernel("KernelLinkDeepShadowMap");
         SortBuffer.SetBuffer(KernelSortDeepShadowMap, "HeaderList", HeaderList);
         SortBuffer.SetBuffer(KernelSortDeepShadowMap, "LinkedList", LinkedList);
-        SortBuffer.SetInt("Dimension", dimension);
         SortBuffer.SetBuffer(KernelSortDeepShadowMap, "DoublyLinkedList", DoublyLinkedList);
+        SortBuffer.SetInt("Dimension", dimension);
         LinkBuffer.SetBuffer(KernelLinkDeepShadowMap, "HeaderList", HeaderList);
         LinkBuffer.SetBuffer(KernelLinkDeepShadowMap, "LinkedList", LinkedList);
         LinkBuffer.SetBuffer(KernelLinkDeepShadowMap, "DoublyLinkedList", DoublyLinkedList);
@@ -172,7 +179,17 @@ public class DeepShadowMap : MonoBehaviour
         ReceiverMaterial.SetBuffer("DoublyLinkedList", DoublyLinkedList);
 
         ReceiverMaterial.SetInt("Dimension", dimension);
+
+        KernelTestBuffer = TestBuffer.FindKernel("KernelTestBuffer");
+        TestBuffer.SetBuffer(KernelTestBuffer, "DoublyLinkedList", DoublyLinkedList);
+        TestBuffer.SetBuffer(KernelTestBuffer, "HeaderList", HeaderList);
+
+        TestRt.enableRandomWrite = true;
+        TestBuffer.SetTexture(KernelTestBuffer, "Result", TestRt);
+        TestBuffer.SetInt("Dimension", dimension);
+
     }
+
     int p = 0;
 
     private void Update()
@@ -202,6 +219,7 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetViewMatrix(lightMatrix);
         BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
         BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
+        BeforeForwardOpaque.SetGlobalFloat("_Alpha", HairAlpha);
         Renderer[] renderers = FindObjectsOfType<Renderer>();
         for (int i = 0, imax = renderers.Length; i < imax; i++)
         {
@@ -220,6 +238,10 @@ public class DeepShadowMap : MonoBehaviour
         }
         BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, 512 / 8, 512 / 8, 1);
         BeforeForwardOpaque.DispatchCompute(LinkBuffer, KernelLinkDeepShadowMap, 512 / 8, 512 / 8, 1);
+
+        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
+        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestBuffer, 512 / 8, 512 / 8, 1);
+
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
         BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
         BeforeForwardOpaque.SetProjectionMatrix(camera.projectionMatrix);

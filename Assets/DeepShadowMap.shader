@@ -2,11 +2,13 @@
 {
     Properties
     {
+		_Alpha ("Alpha", Range(0, 1)) = 0.8
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
 
+		Cull Off
         Pass
         {
             CGPROGRAM
