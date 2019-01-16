@@ -21,6 +21,7 @@
             uniform float _Alpha;
 			RWStructuredBuffer<HeaderNode> HeaderList;
 			RWStructuredBuffer<LinkedNode> LinkedList;
+			float4x4 _LightVP;
 #define _DEBUG_DSM
 
             struct appdata
@@ -36,7 +37,9 @@
             v2f vert (appdata v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                //o.vertex = UnityObjectToClipPos(v.vertex);
+				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+				o.vertex = mul(_LightVP, worldPos);
                 return o;
             }
 #ifdef _DEBUG_DSM

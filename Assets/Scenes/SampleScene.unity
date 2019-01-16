@@ -330,6 +330,9 @@ MonoBehaviour:
   SortBuffer: {fileID: 7200000, guid: fec5b2d604b10aa46909e3be6ae1c04c, type: 3}
   LinkBuffer: {fileID: 7200000, guid: 55f066a8de36b604e96010f10cb1486e, type: 3}
   HairAlpha: 0.7
+  TestBuffer: {fileID: 7200000, guid: 05e29bc2481726745a57aa1b77ccb88e, type: 3}
+  TestRt: {fileID: 8400000, guid: cef95a4d4ce478b45976e54a473c8770, type: 2}
+  TestIndex: 6
   ReceiverMaterial: {fileID: 2100000, guid: dca5c31daf652ce418600d0d8caaf793, type: 2}
 --- !u!1 &912745787
 GameObject:

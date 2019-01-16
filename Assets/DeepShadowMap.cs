@@ -126,7 +126,7 @@ public class DeepShadowMap : MonoBehaviour
 
     public Material ReceiverMaterial;
 
-    private CommandBuffer AfterEverything;
+    private CommandBuffer AfterForwardOpaque;
 
     private void Awake()
     {
@@ -134,10 +134,10 @@ public class DeepShadowMap : MonoBehaviour
         int numElement = 512 * 512 * 50;
 
         BeforeForwardOpaque = new CommandBuffer();
-        AfterEverything = new CommandBuffer();
+        AfterForwardOpaque = new CommandBuffer();
         camera = GetComponent<Camera>();
         camera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, BeforeForwardOpaque);
-        camera.AddCommandBuffer(CameraEvent.AfterEverything, AfterEverything);
+        camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, AfterForwardOpaque);
         LinkedList = new ComputeBuffer(numElement, LinkedNode.StructSize(), ComputeBufferType.Counter);
         LinkedList.SetCounterValue(0);
         HeaderList = new ComputeBuffer(numElement, HeaderNode.StructSize());
@@ -188,38 +188,12 @@ public class DeepShadowMap : MonoBehaviour
         TestBuffer.SetTexture(KernelTestBuffer, "Result", TestRt);
         TestBuffer.SetInt("Dimension", dimension);
 
-    }
 
-    int p = 0;
-
-    private void Update()
-    {
-        //Bounds casterBounds = new Bounds();
-        //casterBounds.SetMinMax(Vector3.positiveInfinity, Vector3.negativeInfinity);
-        //List<Bounds> casterAABBs = new List<Bounds>();
-        //ExtractActiveCasterInfo(Camera.main, ref casterBounds, ref casterAABBs);
-        //Debug.Log(casterAABBs);
-        //Bounds = casterBounds;
-
-        Matrix4x4 lightMatrix = DirectionalLight.transform.worldToLocalMatrix;
-        Vector4 forward = lightMatrix.GetRow(2);
-        lightMatrix.SetRow(2, -forward);
-        Matrix4x4 projMatrix = Matrix4x4.Ortho(-10, 10, -10, 10, 0.1f, 10);
-        //SetupDirectionalLightShadowCamera(new Bounds(), DirectionalLight, 1024, 1024, Bounds, Camera.main, out lightMatrix, out projMatrix);
-        Camera lightCam = DirectionalLight.GetComponent<Camera>();
-        AfterEverything.Clear();
-        BeforeForwardOpaque.Clear();
-
-
-        AfterEverything.DispatchCompute(ResetBuffer, KernelResetHeaderList, 512 / 8, 512 * 50 / 8, 1);
-        AfterEverything.CopyCounterValue(LinkedList, counterBuffer, 0);
-        AfterEverything.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, 512 / 8, 512 * 50 / 8, 1);
+        AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.None);
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
-        BeforeForwardOpaque.SetViewMatrix(lightMatrix);
-        BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
-        BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
-        BeforeForwardOpaque.SetGlobalFloat("_Alpha", HairAlpha);
         Renderer[] renderers = FindObjectsOfType<Renderer>();
         for (int i = 0, imax = renderers.Length; i < imax; i++)
         {
@@ -239,36 +213,76 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, 512 / 8, 512 / 8, 1);
         BeforeForwardOpaque.DispatchCompute(LinkBuffer, KernelLinkDeepShadowMap, 512 / 8, 512 / 8, 1);
 
-        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
         BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestBuffer, 512 / 8, 512 / 8, 1);
-
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+    }
+
+    int p = 0;
+
+    private void Update()
+    {
+        Matrix4x4 lightMatrix = DirectionalLight.transform.worldToLocalMatrix;
+        Vector4 forward = lightMatrix.GetRow(2);
+        lightMatrix.SetRow(2, -forward);
+        BeforeForwardOpaque.SetViewMatrix(lightMatrix);
+
+        Matrix4x4 projMatrix = Matrix4x4.Ortho(-10, 10, -10, 10, 0.1f, 10);
+        BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
+
+        BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
+        BeforeForwardOpaque.SetGlobalFloat("_Alpha", HairAlpha);
+
+        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
+
+
         BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
         BeforeForwardOpaque.SetProjectionMatrix(camera.projectionMatrix);
         BeforeForwardOpaque.SetGlobalVector("CameraPos", camera.transform.position);
         BeforeForwardOpaque.SetGlobalVector("LightPos", DirectionalLight.transform.position);
-        //for (int i = 0, imax = renderers.Length; i < imax; i++)
-        //{
-        //    Renderer rend = renderers[i];
-        //    if (rend.receiveShadows)
-        //    {
-        //        if (IntersectAABBFrustumFull(rend.bounds, rend.localToWorldMatrix, Camera.main.cullingMatrix))
-        //        {
-        //            BeforeForwardOpaque.DrawRenderer(rend, ReceiverMaterial, 0, 0);
-        //        }
-        //    }
-        //}
-        //p = p++ % 512 * 512 * 50;
-        //HeaderNode[] head = new HeaderNode[512 * 512 * 50];
-        //HeaderList.GetData(head);
-        //Debug.Log(head[p].start);
-        //LinkedNode[] dan = new LinkedNode[512 * 512 * 50];
-        //LinkedList.GetData(dan);
-        //Debug.Log(dan[p].next);
-        //ComputeBuffer.CopyCount(LinkedListBufDAN, counterBuffer, 0);
-        //int[] counterArray = new int[1];
-        //counterBuffer.GetData(counterArray);
-        //Debug.Log(counterArray[0]);
+    }
+
+    private void OnGUI()
+    {
+        if (GUI.Button(new Rect(10,10,10,10), "test"))
+        {
+            //Bounds casterBounds = new Bounds();
+            //casterBounds.SetMinMax(Vector3.positiveInfinity, Vector3.negativeInfinity);
+            //List<Bounds> casterAABBs = new List<Bounds>();
+            //ExtractActiveCasterInfo(Camera.main, ref casterBounds, ref casterAABBs);
+            //Debug.Log(casterAABBs);
+            //Bounds = casterBounds;
+
+            //SetupDirectionalLightShadowCamera(new Bounds(), DirectionalLight, 1024, 1024, Bounds, Camera.main, out lightMatrix, out projMatrix);
+            //Camera lightCam = DirectionalLight.GetComponent<Camera>();
+            AfterForwardOpaque.Clear();
+            BeforeForwardOpaque.Clear();
+
+
+
+
+            //for (int i = 0, imax = renderers.Length; i < imax; i++)
+            //{
+            //    Renderer rend = renderers[i];
+            //    if (rend.receiveShadows)
+            //    {
+            //        if (IntersectAABBFrustumFull(rend.bounds, rend.localToWorldMatrix, Camera.main.cullingMatrix))
+            //        {
+            //            BeforeForwardOpaque.DrawRenderer(rend, ReceiverMaterial, 0, 0);
+            //        }
+            //    }
+            //}
+            //p = p++ % 512 * 512 * 50;
+            //HeaderNode[] head = new HeaderNode[512 * 512 * 50];
+            //HeaderList.GetData(head);
+            //Debug.Log(head[p].start);
+            //LinkedNode[] dan = new LinkedNode[512 * 512 * 50];
+            //LinkedList.GetData(dan);
+            //Debug.Log(dan[p].next);
+        }
+        ComputeBuffer.CopyCount(LinkedList, counterBuffer, 0);
+        int[] counterArray = new int[1];
+        counterBuffer.GetData(counterArray);
+        Debug.Log(counterArray[0]);
     }
 
     private void OnDestroy()

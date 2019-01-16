@@ -14,12 +14,14 @@ void KernelLinkDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	{
 		return;
 	}
+	// Center
 	int currentCenter = HeaderList[id.y * Dimension + id.x].start;
 	if (-1 == currentCenter)
 	{
 		return;
 	}
 	int currentRight, currentTop;
+	// Right x + 1
 	if (id.x != Dimension - 1)
 	{
 		currentRight = HeaderList[id.y * Dimension + id.x + 1].start;
@@ -28,6 +30,7 @@ void KernelLinkDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	{
 		currentRight = -1;
 	}
+	// Top y + 1
 	if (id.y != 0)
 	{
 		currentTop = HeaderList[(id.y + 1) * Dimension + id.x].start;
@@ -51,6 +54,7 @@ void KernelLinkDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	for (int i = 0; i < NUM_BUF_ELEMENTS; i++)
 	{
 		depth = DoublyLinkedList[currentCenter].depth;
+		// Search Right
 		for (j = 0; j < NUM_BUF_ELEMENTS; j++)
 		{
 			if(currentRight == -1 || currentEntryRight.next == -1)
@@ -64,6 +68,7 @@ void KernelLinkDeepShadowMap(uint3 id : SV_DispatchThreadID)
 		
 		NeighborsList[currentCenter].right = currentRight;
 		
+		// Search Top
 		for(j = 0; j < NUM_BUF_ELEMENTS; j++)
 		{
 			if(currentTop == -1 || currentEntryTop.next == -1)
@@ -76,6 +81,7 @@ void KernelLinkDeepShadowMap(uint3 id : SV_DispatchThreadID)
 		}
 		NeighborsList[currentCenter].top = currentTop;
 		
+		// Next
 		currentCenter = DoublyLinkedList[currentCenter].next;
 		if(currentCenter == -1)
 			break;
