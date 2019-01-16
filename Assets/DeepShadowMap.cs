@@ -107,6 +107,8 @@ public class DeepShadowMap : MonoBehaviour
     public ComputeShader ResetBuffer;
     private int KernelResetHeaderList;
     private int KernelResetLinkedList;
+    private int KernelResetDoublyLinkedList;
+    private int KernelResetNeighborsList;
 
     ComputeBuffer counterBuffer;
 
@@ -158,8 +160,14 @@ public class DeepShadowMap : MonoBehaviour
         int[] ResetDAN = new int[3] { 0, 1, 1 };
         counterBuffer.SetData(ResetDAN);
 
+
         DoublyLinkedList = new ComputeBuffer(numElement, DoublyLinkedNode.StructSize());
         NeighborsList = new ComputeBuffer(numElement, NeighborsNode.StructSize());
+
+        KernelResetDoublyLinkedList = ResetBuffer.FindKernel("KernelResetDoublyLinkedList");
+        ResetBuffer.SetBuffer(KernelResetDoublyLinkedList, "DoublyLinkedList", DoublyLinkedList);
+        KernelResetNeighborsList = ResetBuffer.FindKernel("KernelResetNeighborsList");
+        ResetBuffer.SetBuffer(KernelResetNeighborsList, "NeighborsList", NeighborsList);
 
         KernelSortDeepShadowMap = SortBuffer.FindKernel("KernelSortDeepShadowMap");
         KernelLinkDeepShadowMap = LinkBuffer.FindKernel("KernelLinkDeepShadowMap");
@@ -192,6 +200,8 @@ public class DeepShadowMap : MonoBehaviour
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, 512 / 8, 512 * 50 / 8, 1);
         AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, 512 / 8, 512 * 50 / 8, 1);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetNeighborsList, 512 / 8, 512 * 50 / 8, 1);
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.None);
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
         Renderer[] renderers = FindObjectsOfType<Renderer>();
@@ -241,9 +251,8 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetGlobalVector("LightPos", DirectionalLight.transform.position);
     }
 
-    private void OnGUI()
+    private void RecycleFunc()
     {
-        if (GUI.Button(new Rect(10,10,10,10), "test"))
         {
             //Bounds casterBounds = new Bounds();
             //casterBounds.SetMinMax(Vector3.positiveInfinity, Vector3.negativeInfinity);
