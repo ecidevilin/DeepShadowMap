@@ -23,7 +23,7 @@ struct NeighborsNode
 	int right;
 	int top;
 };
-#define NUM_BUF_ELEMENTS 50
+#define NUM_BUF_ELEMENTS 64
 #define FILTER_SIZE 2
 #define ZFAR 1000.0f
 

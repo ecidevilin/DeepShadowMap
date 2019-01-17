@@ -131,10 +131,11 @@ public class DeepShadowMap : MonoBehaviour
     public Color HairColor;
 
     const int dimension = 512;
+    const int elements = 64;
 
     private void Start()
     {
-        int numElement = 512 * 512 * 50;
+        int numElement = dimension * dimension * elements;
 
         BeforeForwardOpaque = new CommandBuffer();
         AfterForwardOpaque = new CommandBuffer();
@@ -152,7 +153,7 @@ public class DeepShadowMap : MonoBehaviour
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
         ResetBuffer.SetBuffer(KernelResetHeaderList, "HeaderList", HeaderList);
         ResetBuffer.SetInt("Dimension", dimension);
-        ResetBuffer.Dispatch(KernelResetHeaderList, dimension / 8, dimension * 50 / 8, 1);
+        ResetBuffer.Dispatch(KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
         KernelResetLinkedList = ResetBuffer.FindKernel("KernelResetLinkedList");
         ResetBuffer.SetBuffer(KernelResetLinkedList, "LinkedList", LinkedList);
         counterBuffer = new ComputeBuffer(3, sizeof(uint));
@@ -227,7 +228,7 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetGlobalVector("LightDir", DirectionalLight.transform.forward);
 
 
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension * 50 / 8, 1);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
         AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
         //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, 512 / 8, 512 * 50 / 8, 1);
