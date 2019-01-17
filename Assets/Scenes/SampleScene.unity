@@ -332,6 +332,7 @@ MonoBehaviour:
   TestRt: {fileID: 8400000, guid: cef95a4d4ce478b45976e54a473c8770, type: 2}
   TestIndex: 6
   ReceiverMaterial: {fileID: 2100000, guid: dca5c31daf652ce418600d0d8caaf793, type: 2}
+  HairColor: {r: 1, g: 0.82385063, b: 0, a: 0}
 --- !u!1 &912745787
 GameObject:
   m_ObjectHideFlags: 0

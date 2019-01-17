@@ -25,7 +25,6 @@
             {
                 float4 vertex : POSITION;
                 float3 tangent : TANGENT;
-                float3 color : COLOR;
             };
 
             struct v2f
@@ -34,12 +33,12 @@
                 float4 worldPos : TEXCOORD1;
                 float4 lightPos : TEXCOORD2;
                 float3 tangent : TANGENT;
-                float3 color : COLOR;
             };
 
 			float4x4 _LightVP;
             float3 CameraPos;
             float3 LightDir;
+			float3 _HairColor;
 
 
 			float logConv(float w0, float d1, float w1, float d2)
@@ -121,7 +120,6 @@
                 o.worldPos = worldPos;
 				o.lightPos = mul(_LightVP, worldPos);
                 o.tangent = v.tangent;
-                o.color = v.color;
                 return o;
             }
 
@@ -136,8 +134,7 @@
                 int xLight = posInLight.x;
                 int yLight = posInLight.y;
                 float3 finalColor;
-                float3 objectColor = i.color;
-                finalColor = objectColor * (CalculateKajiyaKay(tangent, posInWorld) + 0.09);
+                finalColor = _HairColor * (CalculateKajiyaKay(tangent, posInWorld) + 0.09);
 
                 float depthSamples[FILTER_SIZE * 2 + 2][FILTER_SIZE * 2 + 2];
                 float shadingSamples[FILTER_SIZE * 2 + 2][FILTER_SIZE * 2 + 2];

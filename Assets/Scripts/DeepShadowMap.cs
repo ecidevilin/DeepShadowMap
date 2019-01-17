@@ -128,6 +128,8 @@ public class DeepShadowMap : MonoBehaviour
 
     private CommandBuffer AfterForwardOpaque;
 
+    public Color HairColor;
+
     const int dimension = 512;
 
     private void Start()
@@ -214,6 +216,7 @@ public class DeepShadowMap : MonoBehaviour
 
         BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
         BeforeForwardOpaque.SetGlobalFloat("_HairAlpha", HairAlpha);
+        BeforeForwardOpaque.SetGlobalColor("_HairColor", HairColor);
 
         BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
 
