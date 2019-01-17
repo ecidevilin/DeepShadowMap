@@ -2,13 +2,13 @@
 {
     Properties
     {
-		_Alpha ("Alpha", Range(0, 1)) = 0.8
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
 
 		Cull Off
+		ZTest Off
         Pass
         {
             CGPROGRAM
@@ -49,9 +49,13 @@
 #endif
             {
                 int counter = LinkedList.IncrementCounter();
-                LinkedList[counter].depth = i.vertex.z + 0.00002;
+                LinkedList[counter].depth = i.vertex.z + 1 / 256.0;
                 LinkedList[counter].alpha = _Alpha;
                 int originalVal;
+				if (i.vertex.z > 1)
+				{
+					return float4(1, 0, 0, 0);
+				}
                 InterlockedExchange(HeaderList[((uint)i.vertex.y) * Dimension + (uint)i.vertex.x].start, counter, originalVal);
                 LinkedList[counter].next = originalVal;
 #ifdef _DEBUG_DSM

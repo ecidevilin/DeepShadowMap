@@ -130,6 +130,9 @@
                 float3 tangent = normalize(i.tangent.xyz);
                 float3 posInWorld = i.worldPos;
                 float3 posInLight = i.lightPos;
+				posInLight += 1;
+				posInLight *= 0.5f;
+				posInLight.xy *= Dimension;
                 int xLight = posInLight.x;
                 int yLight = posInLight.y;
                 float3 finalColor;
@@ -162,8 +165,10 @@
                         }
                     }
 
-                    if(noXLink)
-                        noYLink = true;
+					if (noXLink)
+					{
+						noYLink = true;
+					}
                     else
                     {
                         currentYEntry = currentXEntry;

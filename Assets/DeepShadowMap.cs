@@ -130,7 +130,7 @@ public class DeepShadowMap : MonoBehaviour
 
     private CommandBuffer AfterForwardOpaque;
 
-    private void Awake()
+    private void Start()
     {
         int dimension = 512;
         int numElement = 512 * 512 * 50;
@@ -195,14 +195,45 @@ public class DeepShadowMap : MonoBehaviour
         TestRt.enableRandomWrite = true;
         TestBuffer.SetTexture(KernelTestBuffer, "Result", TestRt);
         TestBuffer.SetInt("Dimension", dimension);
+    }
+
+    int p = 0;
+
+    private void Update()
+    {
+
+
+        AfterForwardOpaque.Clear();
+        BeforeForwardOpaque.Clear();
+
+
+        Matrix4x4 lightMatrix = DirectionalLight.transform.worldToLocalMatrix;
+        Vector4 forward = lightMatrix.GetRow(2);
+        lightMatrix.SetRow(2, -forward);
+        BeforeForwardOpaque.SetViewMatrix(lightMatrix);
+
+        Matrix4x4 projMatrix = Matrix4x4.Ortho(-5, 5, -5, 5, 0.1f, 10);
+        BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
+
+        BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
+        BeforeForwardOpaque.SetGlobalFloat("_Alpha", HairAlpha);
+
+        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
+
+
+        BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
+        BeforeForwardOpaque.SetProjectionMatrix(camera.projectionMatrix);
+        BeforeForwardOpaque.SetGlobalVector("CameraPos", camera.transform.position);
+        BeforeForwardOpaque.SetGlobalVector("LightDir", DirectionalLight.transform.forward);
 
 
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, 512 / 8, 512 * 50 / 8, 1);
         AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, 512 / 8, 512 * 50 / 8, 1);
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetNeighborsList, 512 / 8, 512 * 50 / 8, 1);
+        //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, 512 / 8, 512 * 50 / 8, 1);
+        //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetNeighborsList, 512 / 8, 512 * 50 / 8, 1);
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.None);
+        BeforeForwardOpaque.SetViewport(new Rect(0, 0, 512, 512));
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
         Renderer[] renderers = FindObjectsOfType<Renderer>();
         for (int i = 0, imax = renderers.Length; i < imax; i++)
@@ -225,30 +256,6 @@ public class DeepShadowMap : MonoBehaviour
 
         BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestBuffer, 512 / 8, 512 / 8, 1);
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
-    }
-
-    int p = 0;
-
-    private void Update()
-    {
-        Matrix4x4 lightMatrix = DirectionalLight.transform.worldToLocalMatrix;
-        Vector4 forward = lightMatrix.GetRow(2);
-        lightMatrix.SetRow(2, -forward);
-        BeforeForwardOpaque.SetViewMatrix(lightMatrix);
-
-        Matrix4x4 projMatrix = Matrix4x4.Ortho(-20, 20, -20, 20, 0.1f, 30);
-        BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
-
-        BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
-        BeforeForwardOpaque.SetGlobalFloat("_Alpha", HairAlpha);
-
-        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
-
-
-        BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
-        BeforeForwardOpaque.SetProjectionMatrix(camera.projectionMatrix);
-        BeforeForwardOpaque.SetGlobalVector("CameraPos", camera.transform.position);
-        BeforeForwardOpaque.SetGlobalVector("LightDir", DirectionalLight.transform.forward);
     }
 
     private void RecycleFunc()
@@ -288,10 +295,10 @@ public class DeepShadowMap : MonoBehaviour
             //LinkedList.GetData(dan);
             //Debug.Log(dan[p].next);
         }
-        ComputeBuffer.CopyCount(LinkedList, counterBuffer, 0);
-        int[] counterArray = new int[1];
-        counterBuffer.GetData(counterArray);
-        Debug.Log(counterArray[0]);
+        //ComputeBuffer.CopyCount(LinkedList, counterBuffer, 0);
+        //int[] counterArray = new int[1];
+        //counterBuffer.GetData(counterArray);
+        //Debug.Log(counterArray[0]);
     }
 
     private void OnDestroy()

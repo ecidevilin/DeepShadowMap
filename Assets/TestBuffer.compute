@@ -12,6 +12,11 @@ void KernelTestBuffer(uint3 id : SV_DispatchThreadID)
 {
 
 	int start = HeaderList[id.y * Dimension + id.x].start;
+	if (start == -1)
+	{
+		Result[id.xy] = float4(0, 0, 0, 1);
+		return;
+	}
 	DoublyLinkedNode currentXEntry = DoublyLinkedList[start];
 	int i = 1;
 	while (i < TestIndex)
