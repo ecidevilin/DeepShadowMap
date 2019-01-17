@@ -18,7 +18,7 @@
 
             #include "UnityCG.cginc"
             #include "../Include/DeepShadowMap.cginc"
-            uniform float _Alpha;
+            float _HairAlpha;
 			RWStructuredBuffer<HeaderNode> HeaderList;
 			RWStructuredBuffer<LinkedNode> LinkedList;
 			float4x4 _LightVP;
@@ -50,7 +50,7 @@
             {
                 int counter = LinkedList.IncrementCounter();
                 LinkedList[counter].depth = i.vertex.z + 1 / 256.0;
-                LinkedList[counter].alpha = _Alpha;
+                LinkedList[counter].alpha = _HairAlpha;
                 int originalVal;
 				if (i.vertex.z > 1)
 				{

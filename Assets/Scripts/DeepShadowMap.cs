@@ -146,7 +146,6 @@ public class DeepShadowMap : MonoBehaviour
         mat.SetInt("Dimension", dimension);
         mat.SetBuffer("HeaderList", HeaderList);
         mat.SetBuffer("LinkedList", LinkedList);
-        mat.SetFloat("_Alpha", HairAlpha);
 
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
         ResetBuffer.SetBuffer(KernelResetHeaderList, "HeaderList", HeaderList);
@@ -214,7 +213,7 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
 
         BeforeForwardOpaque.SetGlobalMatrix("_LightVP", projMatrix * lightMatrix);
-        BeforeForwardOpaque.SetGlobalFloat("_Alpha", HairAlpha);
+        BeforeForwardOpaque.SetGlobalFloat("_HairAlpha", HairAlpha);
 
         BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
 
