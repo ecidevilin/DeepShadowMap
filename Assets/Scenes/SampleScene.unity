@@ -320,16 +320,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DirectionalLight: {fileID: 170076734}
-  mesh: {fileID: 0}
   mat: {fileID: 2100000, guid: d9d0bb0ee2510fe49b6d98e07c7c0f33, type: 2}
-  rt: {fileID: 0}
   Bounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0, y: 0, z: 0}
   ResetBuffer: {fileID: 7200000, guid: a150b722134281e49a699211b48fab3d, type: 3}
   SortBuffer: {fileID: 7200000, guid: fec5b2d604b10aa46909e3be6ae1c04c, type: 3}
   LinkBuffer: {fileID: 7200000, guid: 55f066a8de36b604e96010f10cb1486e, type: 3}
-  HairAlpha: 1
+  HairAlpha: 0.5
   TestBuffer: {fileID: 7200000, guid: 05e29bc2481726745a57aa1b77ccb88e, type: 3}
   TestRt: {fileID: 8400000, guid: cef95a4d4ce478b45976e54a473c8770, type: 2}
   TestIndex: 6

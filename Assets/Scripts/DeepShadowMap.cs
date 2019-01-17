@@ -128,9 +128,10 @@ public class DeepShadowMap : MonoBehaviour
 
     private CommandBuffer AfterForwardOpaque;
 
+    const int dimension = 512;
+
     private void Start()
     {
-        int dimension = 512;
         int numElement = 512 * 512 * 50;
 
         BeforeForwardOpaque = new CommandBuffer();
@@ -150,7 +151,7 @@ public class DeepShadowMap : MonoBehaviour
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
         ResetBuffer.SetBuffer(KernelResetHeaderList, "HeaderList", HeaderList);
         ResetBuffer.SetInt("Dimension", dimension);
-        ResetBuffer.Dispatch(KernelResetHeaderList, 512 / 8, 512 * 50 / 8, 1);
+        ResetBuffer.Dispatch(KernelResetHeaderList, dimension / 8, dimension * 50 / 8, 1);
         KernelResetLinkedList = ResetBuffer.FindKernel("KernelResetLinkedList");
         ResetBuffer.SetBuffer(KernelResetLinkedList, "LinkedList", LinkedList);
         counterBuffer = new ComputeBuffer(3, sizeof(uint));
@@ -224,13 +225,13 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetGlobalVector("LightDir", DirectionalLight.transform.forward);
 
 
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, 512 / 8, 512 * 50 / 8, 1);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension * 50 / 8, 1);
         AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
         //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, 512 / 8, 512 * 50 / 8, 1);
         //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetNeighborsList, 512 / 8, 512 * 50 / 8, 1);
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.None);
-        BeforeForwardOpaque.SetViewport(new Rect(0, 0, 512, 512));
+        BeforeForwardOpaque.SetViewport(new Rect(0, 0, dimension, dimension));
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
         Renderer[] renderers = FindObjectsOfType<Renderer>();
         for (int i = 0, imax = renderers.Length; i < imax; i++)
@@ -248,10 +249,10 @@ public class DeepShadowMap : MonoBehaviour
                 }
             }
         }
-        BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, 512 / 8, 512 / 8, 1);
-        BeforeForwardOpaque.DispatchCompute(LinkBuffer, KernelLinkDeepShadowMap, 512 / 8, 512 / 8, 1);
+        BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, dimension / 8, dimension / 8, 1);
+        BeforeForwardOpaque.DispatchCompute(LinkBuffer, KernelLinkDeepShadowMap, dimension / 8, dimension / 8, 1);
 
-        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestBuffer, 512 / 8, 512 / 8, 1);
+        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestBuffer, dimension / 8, dimension / 8, 1);
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
     }
 
