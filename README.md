@@ -2,6 +2,7 @@
 
 
 ![Result](Pic/Hair0.png)
+![Colored](Pic/Hair1.png)
 
 # Reference
 
