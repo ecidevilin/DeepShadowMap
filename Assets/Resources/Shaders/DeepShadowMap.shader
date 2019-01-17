@@ -17,7 +17,7 @@
 			#pragma target 4.5
 
             #include "UnityCG.cginc"
-            #include "DeepShadowMap.cginc"
+            #include "../Include/DeepShadowMap.cginc"
             uniform float _Alpha;
 			RWStructuredBuffer<HeaderNode> HeaderList;
 			RWStructuredBuffer<LinkedNode> LinkedList;

@@ -1,7 +1,7 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel KernelLinkDeepShadowMap
 
-#include "DeepShadowMap.cginc"
+#include "../Include/DeepShadowMap.cginc"
 StructuredBuffer<HeaderNode> HeaderList;
 StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 RWStructuredBuffer<NeighborsNode> NeighborsList;

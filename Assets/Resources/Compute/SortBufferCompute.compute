@@ -1,7 +1,7 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel KernelSortDeepShadowMap
 
-#include "DeepShadowMap.cginc"
+#include "../Include/DeepShadowMap.cginc"
 StructuredBuffer<HeaderNode> HeaderList;
 StructuredBuffer<LinkedNode> LinkedList;
 RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;

@@ -3,7 +3,7 @@
 #pragma kernel KernelResetLinkedList
 #pragma kernel KernelResetDoublyLinkedList
 #pragma kernel KernelResetNeighborsList
-#include "DeepShadowMap.cginc"
+#include "../Include/DeepShadowMap.cginc"
 RWStructuredBuffer<HeaderNode> HeaderList;
 RWStructuredBuffer<LinkedNode> LinkedList;
 RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;

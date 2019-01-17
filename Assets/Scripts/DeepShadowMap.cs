@@ -93,9 +93,7 @@ public class DeepShadowMap : MonoBehaviour
     private Camera camera;
     private CommandBuffer BeforeForwardOpaque;
     public Light DirectionalLight;
-    public Mesh mesh;
     public Material mat;
-    public RenderTexture rt;
 
     public Bounds Bounds;
 
@@ -143,7 +141,6 @@ public class DeepShadowMap : MonoBehaviour
         LinkedList = new ComputeBuffer(numElement, LinkedNode.StructSize(), ComputeBufferType.Counter);
         LinkedList.SetCounterValue(0);
         HeaderList = new ComputeBuffer(numElement, HeaderNode.StructSize());
-        BeforeForwardOpaque.SetRenderTarget(rt, 0);
         BeforeForwardOpaque.SetViewport(new Rect(0, 0, dimension, dimension));
         mat.SetInt("Dimension", dimension);
         mat.SetBuffer("HeaderList", HeaderList);
