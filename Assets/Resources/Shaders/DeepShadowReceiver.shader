@@ -65,7 +65,7 @@
              {
                  DoublyLinkedNode tempEntry;
                  int newNum = -1;	// -1 means not changed
-                
+
                  if(entry.depth < z)
                      for(int i = 0; i < NUM_BUF_ELEMENTS; i++)
                      {

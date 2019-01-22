@@ -1,0 +1,15 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel KernelHashDeepShadowMap
+
+#include "../Include/DeepShadowMap.cginc"
+RWStructuredBuffer<HeaderNode> HeaderList;
+RWStructuredBuffer<LinkedNode> LinkedList;
+
+[numthreads(64,1,1)]
+void KernelHashDeepShadowMap (uint3 id : SV_DispatchThreadID)
+{
+    int originalVal;
+    float3 pos = LinkedList[id.x].position;
+    InterlockedExchange(HeaderList[((uint)pos.y) * Dimension + (uint)pos.x].start, id.x, originalVal);
+    LinkedList[id.x].next = originalVal;
+}

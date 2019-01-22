@@ -38,7 +38,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	{
 		numElems++;
 		node = LinkedList[current];
-		list[i].depth = node.depth;
+		list[i].depth = node.position.z;
 		list[i].alpha = node.alpha;
 		nextPoints[i] = node.next;
 		if (nextPoints[i] == -1)
@@ -56,7 +56,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 		temp = list[i];
 		j = i - 1;
 		[loop]
-		while (temp.depth < list[j].depth && j >= 0)
+        while (temp.depth < list[j].depth && j >= 0)
 		{
 			list[j + 1] = list[j];
 			j = j - 1;

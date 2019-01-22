@@ -5,9 +5,9 @@
 
 struct LinkedNode
 {
-    float depth;
-    float alpha;
     int next;
+    float3 position;
+    float alpha;
 };
 
 struct DoublyLinkedNode 
@@ -23,7 +23,7 @@ struct NeighborsNode
 	int right;
 	int top;
 };
-#define NUM_BUF_ELEMENTS 64
+#define NUM_BUF_ELEMENTS 16
 #define FILTER_SIZE 2
 #define ZFAR 1000.0f
 

@@ -1,28 +1,81 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel KernelTestBuffer
+#pragma kernel KernelResetTestResult
+#pragma kernel KernelTestHeaderList
+#pragma kernel KernelTestLinkedList
+#pragma kernel KernelTestDoublyLinkedList
 #include "../Include/DeepShadowMap.cginc"
 
 StructuredBuffer<HeaderNode> HeaderList;
 StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
-RWTexture2D<float4> Result;
+StructuredBuffer<LinkedNode> LinkedList;
+RWTexture2D<float4> TestRt;
 int TestIndex;
 
 [numthreads(8,8,1)]
-void KernelTestBuffer(uint3 id : SV_DispatchThreadID)
+void KernelResetTestResult(uint3 id : SV_DispatchThreadID)
+{
+    TestRt[id.xy] = float4(0,0,0,1);
+}
+
+[numthreads(8,8,1)]
+void KernelTestHeaderList(uint3 id : SV_DispatchThreadID)
+{
+    int start = HeaderList[id.y * Dimension + id.x].start;
+    if (start == -1)
+    {
+        TestRt[id.xy] = float4(0,0,0,1);
+    }
+    else
+    {
+        TestRt[id.xy] = float4(1,0,0,1);
+    }
+}
+
+[numthreads(8,8,1)]
+void KernelTestLinkedList(uint3 id : SV_DispatchThreadID)
+{
+
+    int start = HeaderList[id.y * Dimension + id.x].start;
+    if (start == -1)
+    {
+        TestRt[id.xy] = float4(0, 0, 0, 1);
+        return;
+    }
+    LinkedNode currentXEntry = LinkedList[start];
+    int i = 1;
+    for (;i < TestIndex; i++)
+    {
+        if (currentXEntry.next == -1)
+        {
+            TestRt[id.xy] = float4(0, 0, 0, 1);
+            return;
+        }
+        currentXEntry = LinkedList[currentXEntry.next];
+    }
+    TestRt[id.xy] = float4(currentXEntry.position.z, 0, currentXEntry.alpha, 1);
+}
+
+[numthreads(8,8,1)]
+void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
 {
 
 	int start = HeaderList[id.y * Dimension + id.x].start;
 	if (start == -1)
 	{
-		Result[id.xy] = float4(0, 0, 0, 1);
+		TestRt[id.xy] = float4(0, 0, 0, 1);
 		return;
 	}
 	DoublyLinkedNode currentXEntry = DoublyLinkedList[start];
 	int i = 1;
 	while (i < TestIndex)
 	{
+        if (currentXEntry.next == -1)
+        {
+            TestRt[id.xy] = float4(0, 0, 0, 1);
+            return;
+        }
 		currentXEntry = DoublyLinkedList[currentXEntry.next];
 		i++;
 	}
-	Result[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, 1, 1);
+	TestRt[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, 0, 1);
 }

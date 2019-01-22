@@ -19,7 +19,7 @@
             #include "UnityCG.cginc"
             #include "../Include/DeepShadowMap.cginc"
             float _HairAlpha;
-			RWStructuredBuffer<HeaderNode> HeaderList;
+			//RWStructuredBuffer<HeaderNode> HeaderList;
 			RWStructuredBuffer<LinkedNode> LinkedList;
 			float4x4 _LightVP;
 #define _DEBUG_DSM
@@ -32,14 +32,15 @@
             struct v2f
             {
                 float4 vertex : SV_POSITION;
+                float4 lightPos : TEXCOORD1;
             };
 
             v2f vert (appdata v)
             {
                 v2f o;
-                //o.vertex = UnityObjectToClipPos(v.vertex);
+                o.vertex = UnityObjectToClipPos(v.vertex);
 				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-				o.vertex = mul(_LightVP, worldPos);
+				o.lightPos = mul(_LightVP, worldPos);
                 return o;
             }
 #ifdef _DEBUG_DSM
@@ -48,19 +49,21 @@
 			void frag(v2f i)
 #endif
             {
+                float3 posInLight = i.lightPos;
+                posInLight += 1;
+                posInLight *= 0.5f;
+                posInLight.xy *= Dimension;
                 int counter = LinkedList.IncrementCounter();
-                LinkedList[counter].depth = i.vertex.z + 1 / 256.0;
+                //int originalVal;
+                //InterlockedExchange(HeaderList[((uint)i.vertex.y) * Dimension + (uint)i.vertex.x].start, counter, originalVal);
+                //LinkedList[counter].next = originalVal;
+                LinkedList[counter].position = posInLight;
                 LinkedList[counter].alpha = _HairAlpha;
-                int originalVal;
-				if (i.vertex.z > 1)
-				{
-					return float4(1, 0, 0, 0);
-				}
-                InterlockedExchange(HeaderList[((uint)i.vertex.y) * Dimension + (uint)i.vertex.x].start, counter, originalVal);
-                LinkedList[counter].next = originalVal;
+
 #ifdef _DEBUG_DSM
-                return fixed4(LinkedList[counter].depth, LinkedList[counter].alpha, HeaderList[((uint)i.vertex.y) * Dimension + (uint)i.vertex.x].start, 1);
+                return fixed4(LinkedList[counter].position.z, LinkedList[counter].alpha, counter, 1);
 #endif
+
             }
             ENDCG
         }
