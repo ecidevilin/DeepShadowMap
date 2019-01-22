@@ -14,12 +14,12 @@ public struct HeaderNode
 
 public struct LinkedNode
 {
-    public float depth;
+    public Vector3 position;
     public float alpha;
     public int next;
     public static int StructSize()
     {
-        return sizeof(float) * 2 + sizeof(int);
+        return sizeof(float) * 4 + sizeof(int);
     }
 };
 

@@ -53,7 +53,7 @@ public class DeepShadowMap : MonoBehaviour
     public Color HairColor;
 
     const int dimension = 512;
-    const int elements = 16;
+    const int elements = 64;
 
     private void Start()
     {
