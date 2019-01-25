@@ -6,12 +6,6 @@ StructuredBuffer<HeaderNode> HeaderList;
 StructuredBuffer<LinkedNode> LinkedList;
 RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 
-struct LocalListEntry
-{
-	float depth;
-	float alpha;
-};
-
 [numthreads(8,8,1)]
 void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 {
@@ -19,79 +13,65 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	{
 		return;
 	}
-	LocalListEntry list[NUM_BUF_ELEMENTS];
-	int nextPoints[NUM_BUF_ELEMENTS];
-
-	int current;
-	LocalListEntry temp;
 	int start = HeaderList[id.y * Dimension + id.x].start;
+
+    int offset = (id.y * Dimension + id.x) * NUM_BUF_ELEMENTS;
 	if (start == -1)
 	{
-		return;
-	}
-	current = start;
-	int numElems = 0;
-	int i;
-	LinkedNode node;
-	// Copy
-	for (i = 0; i < NUM_BUF_ELEMENTS; i++)
-	{
-		numElems++;
-		node = LinkedList[current];
-		list[i].depth = node.position.z;
-		list[i].alpha = node.alpha;
-		nextPoints[i] = node.next;
-		if (nextPoints[i] == -1)
+        DoublyLinkedList[offset].shading = 0;
+        return;
+    }
+
+    int current;
+    current = start;
+    int next = -1;
+    int numElems = 0;
+    LinkedNode node;
+
+    int i;
+    // Copy
+    for (i = 0; i < NUM_BUF_ELEMENTS; i++)
+    {
+        numElems++;
+        node = LinkedList[current];
+        DoublyLinkedList[i + offset].depth = node.position.z + 1/256.0;
+        DoublyLinkedList[i + offset].shading = node.alpha;
+        next = node.next;
+        if (next == -1)
+        {
+            break;
+        }
+        current = next;
+    }
+
+    DoublyLinkedNode temp;
+    // Sort
+    int j;
+    for (i = 1; i < numElems; i++)
+    {
+        temp = DoublyLinkedList[i + offset];
+        j = i - 1;
+        [loop]
+        while (j >= 0 && temp.depth < DoublyLinkedList[j + offset].depth)
+        {
+            DoublyLinkedList[j + 1 + offset] = DoublyLinkedList[j + offset];
+            j = j - 1;
+        }
+        DoublyLinkedList[j + 1 + offset] = temp;
+    }
+
+    // Shade
+    float shadingBefore = 1.0;
+    for (i = 0; i < numElems; i++)
+    {
+        float shadingCurrent = shadingBefore * (1.0 - DoublyLinkedList[i + offset].shading);
+		if (shadingBefore - shadingCurrent < 0.001)
 		{
+			DoublyLinkedList[i + offset].shading = 0;
 			break;
 		}
-		current = nextPoints[i];
-	}
-	nextPoints[NUM_BUF_ELEMENTS - 1] = -1;
-
-	// Sort
-	int j;
-	for (i = 1; i < numElems; i++)
-	{
-		temp = list[i];
-		j = i - 1;
-		[loop]
-        while (temp.depth < list[j].depth && j >= 0)
-		{
-			list[j + 1] = list[j];
-			j = j - 1;
-		}
-		list[j + 1] = temp;
-	}
-
-	// Shade
-	float shadingBefore = 1.0;
-	for (i = 0; i < numElems; i++)
-	{
-		float shadingCurrent = shadingBefore * (1.0 - list[i].alpha);
-		if (shadingBefore - shadingCurrent > 0.001)
-		{
-			shadingBefore = shadingCurrent;
-			list[i].alpha = shadingCurrent;
-		}
-		else{
-			numElems = i;
-			nextPoints[i - 1] = -1;
-			break;
-		}
-	}
-
-	// Output
-	int prev = -1;
-	current = start;
-	for (i = 0; i < numElems; i++)
-	{
-		DoublyLinkedList[current].depth = list[i].depth;
-		DoublyLinkedList[current].next = nextPoints[i];
-		DoublyLinkedList[current].shading = list[i].alpha;
-		DoublyLinkedList[current].prev = prev;
-		prev = current;
-		current = nextPoints[i];
-	}
+        shadingBefore = shadingCurrent;
+		DoublyLinkedList[i + offset].shading = shadingCurrent;
+    }
 }
 

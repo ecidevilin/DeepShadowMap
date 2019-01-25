@@ -61,43 +61,45 @@
                 return (1-s)*(1-t)*v0 + s*(1-t)*v1 + (1-s)*t*v2 + s*t*v3;
             }
 
-             void depthSearch(inout DoublyLinkedNode entry, inout NeighborsNode entryNeighbors, float z, out float outDepth, out float outShading)
+             void depthSearch(inout int entryIdx, inout NeighborsNode entryNeighbors, float z, out float outDepth, out float outShading)
              {
                  DoublyLinkedNode tempEntry;
                  int newNum = -1;	// -1 means not changed
-
+                 int current = entryIdx;
+                 DoublyLinkedNode entry = DoublyLinkedList[entryIdx];
                  if(entry.depth < z)
                      for(int i = 0; i < NUM_BUF_ELEMENTS; i++)
                      {
-                         if(entry.next == -1)
+
+                         tempEntry = DoublyLinkedList[current + 1];
+                         if(tempEntry.shading == 0)
                          {
                              outDepth = entry.depth;
                              outShading = entry.shading;
                              break;
                          }
-
-                         tempEntry = DoublyLinkedList[entry.next];
                          if(tempEntry.depth >= z)
                          {
                              outDepth = entry.depth;
                              outShading = entry.shading;
                              break;
                          }
-                         newNum = entry.next;
+                         newNum = ++current;
                          entry = tempEntry;
                      }
                  else
                      for(int i = 0; i < NUM_BUF_ELEMENTS; i++)
                      {
-                         if(entry.prev == -1)
+                         tempEntry = DoublyLinkedList[current - 1];
+                         if(tempEntry.shading == 0)
                          {
                              outDepth = entry.depth;
                              outShading = 1.0f;
                              break;
                          }
                         
-                         newNum = entry.prev;
-                         entry = DoublyLinkedList[entry.prev];
+                         newNum = --current;
+                         entry = tempEntry;
 
                          if(entry.depth < z)
                          {
@@ -138,8 +140,8 @@
 
                 float depthSamples[FILTER_SIZE * 2 + 2][FILTER_SIZE * 2 + 2];
                 float shadingSamples[FILTER_SIZE * 2 + 2][FILTER_SIZE * 2 + 2];
-                DoublyLinkedNode currentXEntry;
-                DoublyLinkedNode currentYEntry;
+                int currentXEntry;
+                int currentYEntry;
                 NeighborsNode currentXEntryNeighbors;
                 NeighborsNode currentYEntryNeighbors;
                 int currentX = xLight - FILTER_SIZE;
@@ -161,10 +163,10 @@
 
                     if(noXLink && !(currentX < 0 || currentY < 0 || currentX >= Dimension || currentY >= Dimension))
                     {
-                        int start = HeaderList[currentY * Dimension + currentX].start;
-                        if(start != -1)
+                        int start = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
+                        if(DoublyLinkedList[start].shading != 0)
                         {
-                            currentXEntry = DoublyLinkedList[start];
+                            currentXEntry = start;
                             currentXEntryNeighbors = NeighborsList[start];
                             noXLink = false;
                         }
@@ -192,8 +194,8 @@
                         
                         if(noYLink)
                         {
-                            int start = HeaderList[currentY * Dimension + currentX].start;
-                            if(start == -1)
+                            int start = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
+                            if(DoublyLinkedList[start].shading == 0)
                             {
                                 depthSamples[x][y] = 1.0f;
                                 shadingSamples[x][y] = 1.0f;
@@ -202,31 +204,35 @@
                             }
 
                             noYLink = false;
-                            currentYEntry = DoublyLinkedList[start];
+                            currentYEntry = start;
                             currentYEntryNeighbors = NeighborsList[start];
                         }
-                        
+
                         depthSearch(currentYEntry, currentYEntryNeighbors, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
                         currentY++;
-
-                        if(currentYEntryNeighbors.top != -1 && !noYLink)
+                        if(!noYLink && currentYEntryNeighbors.top != -1)
                         {
-                            currentYEntry = DoublyLinkedList[currentYEntryNeighbors.top];
+                            currentYEntry = currentYEntryNeighbors.top;
                             currentYEntryNeighbors = NeighborsList[currentYEntryNeighbors.top];
                         }
                         else
+                        {
                             noYLink = true;
+                            continue;
+                        }
                     }
 
                     currentX++;
-
-                    if(currentXEntryNeighbors.right != -1 && !noXLink)
+                    if(!noXLink && currentXEntryNeighbors.right != -1)
                     {
-                        currentXEntry = DoublyLinkedList[currentXEntryNeighbors.right];
+                        currentXEntry = currentXEntryNeighbors.right;
                         currentXEntryNeighbors = NeighborsList[currentXEntryNeighbors.right];
                     }
                     else
+                    {
                         noXLink = true;
+                        continue;
+                    }
                 }
             #if FILTER_SIZE > 0
                 float depthSamples2[2][FILTER_SIZE * 2 + 2];

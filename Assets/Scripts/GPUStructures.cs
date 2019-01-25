@@ -14,9 +14,9 @@ public struct HeaderNode
 
 public struct LinkedNode
 {
+    public int next;
     public Vector3 position;
     public float alpha;
-    public int next;
     public static int StructSize()
     {
         return sizeof(float) * 4 + sizeof(int);
@@ -26,12 +26,10 @@ public struct LinkedNode
 public struct DoublyLinkedNode
 {
     public float depth;
-    public float shading;  // stores final shading
-    public int next;
-    public int prev;
+    public float shading;
     public static int StructSize()
     {
-        return sizeof(float) * 2 + sizeof(int) * 2;
+        return sizeof(float) * 2;
     }
 };
 
