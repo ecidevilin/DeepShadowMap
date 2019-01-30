@@ -32,6 +32,5 @@ void KernelResetDoublyLinkedList(uint3 id :SV_DispatchThreadID)
 [numthreads(8,8,1)]
 void KernelResetNeighborsList(uint3 id :SV_DispatchThreadID)
 {
-	NeighborsList[id.y * Dimension + id.x].top = -1;
-    NeighborsList[id.y * Dimension + id.x].right = -1;
+	NeighborsList[id.y * Dimension + id.x].neighbor = -1;
 }

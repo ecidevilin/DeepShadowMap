@@ -67,17 +67,19 @@
                  int newNum = -1;	// -1 means not changed
                  int current = entryIdx;
                  DoublyLinkedNode entry = DoublyLinkedList[entryIdx];
+                 int i;
                  if(entry.depth < z)
-                     for(int i = 0; i < NUM_BUF_ELEMENTS; i++)
+                 {
+                     for(i = 0; i < NUM_BUF_ELEMENTS; i++)
                      {
 
-                         tempEntry = DoublyLinkedList[current + 1];
-                         if(tempEntry.shading == 0)
+                         if(entry.headOrTail == -1)
                          {
                              outDepth = entry.depth;
                              outShading = entry.shading;
                              break;
                          }
+                         tempEntry = DoublyLinkedList[current + 1];
                          if(tempEntry.depth >= z)
                          {
                              outDepth = entry.depth;
@@ -87,19 +89,19 @@
                          newNum = ++current;
                          entry = tempEntry;
                      }
+                 }
                  else
-                     for(int i = 0; i < NUM_BUF_ELEMENTS; i++)
+                 {
+                     for(i = 0; i < NUM_BUF_ELEMENTS; i++)
                      {
-                         tempEntry = DoublyLinkedList[current - 1];
-                         if(tempEntry.shading == 0)
+                         if (entry.headOrTail == 1)
                          {
                              outDepth = entry.depth;
                              outShading = 1.0f;
                              break;
                          }
-                        
                          newNum = --current;
-                         entry = tempEntry;
+                         entry = DoublyLinkedList[newNum];
 
                          if(entry.depth < z)
                          {
@@ -109,6 +111,7 @@
                          }
                         
                      }
+                 }
                 
                  if(newNum != -1)	// finally lookup the neighbors if we changed entry
                      entryNeighbors = NeighborsList[newNum];
@@ -143,7 +146,6 @@
                 int currentXEntry;
                 int currentYEntry;
                 NeighborsNode currentXEntryNeighbors;
-                NeighborsNode currentYEntryNeighbors;
                 int currentX = xLight - FILTER_SIZE;
                 bool noXLink = true;
                 int x,y;
@@ -153,33 +155,22 @@
 					for (y = 0; y < FILTER_SIZE * 2 + 2; y++)
 					{
 						depthSamples[x][y] = 1.0f;
-						shadingSamples[x][y] = 1.0f;
+						shadingSamples[x][y] = 0.0f;
 					}
 				}
                 for(x = 0; x < FILTER_SIZE * 2 + 2; x++)
                 {
-                    bool noYLink = false;
                     int currentY = yLight - FILTER_SIZE;
 
                     if(noXLink && !(currentX < 0 || currentY < 0 || currentX >= Dimension || currentY >= Dimension))
                     {
                         int start = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
-                        if(DoublyLinkedList[start].shading != 0)
+                        if(DoublyLinkedList[start].headOrTail != -1)
                         {
                             currentXEntry = start;
                             currentXEntryNeighbors = NeighborsList[start];
                             noXLink = false;
                         }
-                    }
-
-					if (noXLink)
-					{
-						noYLink = true;
-					}
-                    else
-                    {
-                        currentYEntry = currentXEntry;
-                        currentYEntryNeighbors = currentXEntryNeighbors;
                     }
 
                     for(y = 0; y < FILTER_SIZE * 2 + 2; y++)
@@ -192,10 +183,10 @@
                             continue;
                         }
                         
-                        if(noYLink)
+                        if(noXLink)
                         {
                             int start = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
-                            if(DoublyLinkedList[start].shading == 0)
+                            if(DoublyLinkedList[start].headOrTail == -1)
                             {
                                 depthSamples[x][y] = 1.0f;
                                 shadingSamples[x][y] = 1.0f;
@@ -203,30 +194,31 @@
                                 continue;
                             }
 
-                            noYLink = false;
-                            currentYEntry = start;
-                            currentYEntryNeighbors = NeighborsList[start];
+                            noXLink = false;
+                            currentXEntry = start;
+                            currentXEntryNeighbors = NeighborsList[start];
                         }
 
-                        depthSearch(currentYEntry, currentYEntryNeighbors, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
+                        depthSearch(currentXEntry, currentXEntryNeighbors, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
                         currentY++;
-                        if(!noYLink && currentYEntryNeighbors.top != -1)
+                        
+                        if(!noXLink && currentXEntryNeighbors.neighbor != -1)
                         {
-                            currentYEntry = currentYEntryNeighbors.top;
-                            currentYEntryNeighbors = NeighborsList[currentYEntryNeighbors.top];
+                            currentXEntry = currentXEntryNeighbors.neighbor;
+                            currentXEntryNeighbors = NeighborsList[currentXEntryNeighbors.neighbor];
                         }
                         else
                         {
-                            noYLink = true;
+                            noXLink = true;
                             continue;
                         }
                     }
 
                     currentX++;
-                    if(!noXLink && currentXEntryNeighbors.right != -1)
+                    if(!noXLink && currentXEntryNeighbors.neighbor != -1)
                     {
-                        currentXEntry = currentXEntryNeighbors.right;
-                        currentXEntryNeighbors = NeighborsList[currentXEntryNeighbors.right];
+                        currentXEntry = currentXEntryNeighbors.neighbor;
+                        currentXEntryNeighbors = NeighborsList[currentXEntryNeighbors.neighbor];
                     }
                     else
                     {

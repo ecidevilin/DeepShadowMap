@@ -16,96 +16,76 @@ void KernelLinkDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	}
 
     int offset = (id.y * Dimension + id.x) * NUM_BUF_ELEMENTS;
-	if (DoublyLinkedList[offset].shading == 0)
+	if (DoublyLinkedList[offset].headOrTail == -1)
 	{
 		return;
 	}
 	// Center
 	int currentCenter = offset;
-	int currentRight, currentTop;
-    DoublyLinkedNode currentEntryRight; 
-    DoublyLinkedNode currentEntryTop;
+	int currentNeighbor;
+    DoublyLinkedNode currentEntryNeighbor;
 	// Right x + 1
 	if (id.x != Dimension - 1)
 	{
-		currentRight = offset + NUM_BUF_ELEMENTS;
-        currentEntryRight = DoublyLinkedList[currentRight];
-        if (currentEntryRight.shading == 0)
+		currentNeighbor = offset + NUM_BUF_ELEMENTS;
+        currentEntryNeighbor = DoublyLinkedList[currentNeighbor];
+        if (currentEntryNeighbor.headOrTail == -1)
         {
-            currentRight = -1;
+            currentNeighbor = -1;
         }
 	}
 	else
 	{
-		currentRight = -1;
+		currentNeighbor = -1;
 	}
 	// Top y + 1
-	if (id.y != Dimension - 1)
+	if (currentNeighbor == -1 && id.y != Dimension - 1)
 	{
-		currentTop = offset + NUM_BUF_ELEMENTS * Dimension;
-        currentEntryTop = DoublyLinkedList[currentTop];
-        if (currentEntryTop.shading == 0)
+		currentNeighbor = offset + NUM_BUF_ELEMENTS * Dimension;
+        currentEntryNeighbor = DoublyLinkedList[currentNeighbor];
+        if (currentEntryNeighbor.headOrTail == -1)
         {
-            currentTop = -1;
+            currentNeighbor = -1;
         }
 	}
-	else
+	int i;
+	if (currentNeighbor == -1)
 	{
-		currentTop = -1;
+		return;
 	}
 
 	DoublyLinkedNode tempListEntry;
     
 	float depth;
-	int i,j;
+	int j;
 	for (i = 0; i < NUM_BUF_ELEMENTS; i++)
 	{
 		depth = DoublyLinkedList[currentCenter].depth;
 		// Search Right
 		for (j = 1; j < NUM_BUF_ELEMENTS; j++)
 		{
-			if (currentRight == -1 || currentEntryRight.shading == 0)
+			if (currentNeighbor == -1 || currentEntryNeighbor.headOrTail == -1)
 			{
-				currentRight = -1;
+				//currentNeighbor = -1;
 				break;
 			}
-			tempListEntry = DoublyLinkedList[currentRight + 1];
+			tempListEntry = DoublyLinkedList[currentNeighbor + 1];
 
             if(depth < tempListEntry.depth)
 				break;
-			currentRight++;
-			currentEntryRight = tempListEntry;
+			currentNeighbor++;
+			currentEntryNeighbor = tempListEntry;
 		}
         if (j == NUM_BUF_ELEMENTS)
         {
-            currentRight = -1;
+            currentNeighbor = -1;
         }
 		
-		NeighborsList[currentCenter].right = currentRight;
-		
-		// Search Top
-		for(j = 1; j < NUM_BUF_ELEMENTS; j++)
-		{
-			if (currentTop == -1 || currentEntryTop.shading == 0)
-			{
-				currentTop = -1;
-				break;
-			}
-			tempListEntry = DoublyLinkedList[currentTop + 1];
-            if(depth < tempListEntry.depth)
-				break;
-			currentTop++;
-			currentEntryTop = tempListEntry;
-		}
-        if (j == NUM_BUF_ELEMENTS)
-        {
-            currentTop = -1;
-        }
-		NeighborsList[currentCenter].top = currentTop;
+		NeighborsList[currentCenter].neighbor = currentNeighbor;
 		
 		// Next
 		currentCenter++;
-		if(DoublyLinkedList[currentCenter].shading == 0)
+		if(DoublyLinkedList[currentCenter].headOrTail == -1)
 			break;
 	}
 }

@@ -40,6 +40,7 @@ public class DeepShadowMap : MonoBehaviour
     private int KernelTestHeaderList;
     private int KernelTestLinkedList;
     private int KernelTestDoublyLinkedList;
+    private int KernelTestNeighborsList;
     public RenderTexture TestRt;
     [Range(0, 49)]
     public int TestIndex;
@@ -48,6 +49,7 @@ public class DeepShadowMap : MonoBehaviour
         KernelTestHeaderList,
         KernelTestLinkedList,
         KernelTestDoublyLinkedList,
+        KernelTestNeighborsList,
     }
     public ETestKernel TestKernel;
 #endif
@@ -117,17 +119,20 @@ public class DeepShadowMap : MonoBehaviour
         KernelTestHeaderList = TestBuffer.FindKernel("KernelTestHeaderList");
         KernelTestLinkedList = TestBuffer.FindKernel("KernelTestLinkedList");
         KernelTestDoublyLinkedList = TestBuffer.FindKernel("KernelTestDoublyLinkedList");
+        KernelTestNeighborsList = TestBuffer.FindKernel("KernelTestNeighborsList");
         TestBuffer.SetInt("Dimension", dimension);
         TestBuffer.SetBuffer(KernelTestHeaderList, "HeaderList", HeaderList);
         TestBuffer.SetBuffer(KernelTestLinkedList, "HeaderList", HeaderList);
         TestBuffer.SetBuffer(KernelTestLinkedList, "LinkedList", LinkedList);
         TestBuffer.SetBuffer(KernelTestDoublyLinkedList, "HeaderList", HeaderList);
         TestBuffer.SetBuffer(KernelTestDoublyLinkedList, "DoublyLinkedList", DoublyLinkedList);
+        TestBuffer.SetBuffer(KernelTestNeighborsList, "NeighborsList", NeighborsList);
         TestRt.enableRandomWrite = true;
         TestBuffer.SetTexture(KernelResetTestResult, "TestRt", TestRt);
         TestBuffer.SetTexture(KernelTestHeaderList, "TestRt", TestRt);
         TestBuffer.SetTexture(KernelTestLinkedList, "TestRt", TestRt);
         TestBuffer.SetTexture(KernelTestDoublyLinkedList, "TestRt", TestRt);
+        TestBuffer.SetTexture(KernelTestNeighborsList, "TestRt", TestRt);
 
 #endif
         Shader.SetGlobalBuffer("HeaderList", HeaderList);
@@ -208,6 +213,10 @@ public class DeepShadowMap : MonoBehaviour
         else if (TestKernel == ETestKernel.KernelTestDoublyLinkedList)
         {
             BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestDoublyLinkedList, dimension / 8, dimension / 8, 1);
+        }
+        else if (TestKernel == ETestKernel.KernelTestNeighborsList)
+        {
+            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestNeighborsList, dimension / 8, dimension / 8, 1);
         }
 #endif
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);

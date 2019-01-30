@@ -3,11 +3,13 @@
 #pragma kernel KernelTestHeaderList
 #pragma kernel KernelTestLinkedList
 #pragma kernel KernelTestDoublyLinkedList
+#pragma kernel KernelTestNeighborsList
 #include "../Include/DeepShadowMap.cginc"
 
 StructuredBuffer<HeaderNode> HeaderList;
 StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 StructuredBuffer<LinkedNode> LinkedList;
+RWStructuredBuffer<NeighborsNode> NeighborsList;
 RWTexture2D<float4> TestRt;
 int TestIndex;
 
@@ -64,12 +66,31 @@ void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
 	do
 	{
 		currentXEntry = DoublyLinkedList[offset++];
-		if (currentXEntry.shading == -1)
+		if (currentXEntry.headOrTail == -1)
 		{
 			TestRt[id.xy] = float4(0, 0, 0, 1);
 			return;
 		}
 		i++;
 	} while (i < TestIndex);
-	TestRt[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, 0, 1);
+	TestRt[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, currentXEntry.headOrTail, 1);
+}
+
+[numthreads(8,8,1)]
+void KernelTestNeighborsList(uint3 id : SV_DispatchThreadID)
+{
+	int offset = NUM_BUF_ELEMENTS * (id.y * Dimension + id.x);
+	int i = 0;
+	NeighborsNode currentXEntry;
+	do
+	{
+		currentXEntry = NeighborsList[offset++];
+		if (currentXEntry.neighbor == -1)
+		{
+			TestRt[id.xy] = float4(0, 0, 0, 1);
+			return;
+		}
+		i++;
+	} while (i < TestIndex);
+	TestRt[id.xy] = float4(1, 0, 0, 1);
 }

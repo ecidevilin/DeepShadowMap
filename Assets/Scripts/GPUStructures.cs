@@ -27,18 +27,18 @@ public struct DoublyLinkedNode
 {
     public float depth;
     public float shading;
+    public int headOrTail;
     public static int StructSize()
     {
-        return sizeof(float) * 2;
+        return sizeof(float) * 2 + sizeof(int);
     }
 };
 
 public struct NeighborsNode
 {
-    public int right;
-    public int top;
+    public int neighbor;
     public static int StructSize()
     {
-        return sizeof(int) * 2;
+        return sizeof(int);
     }
 };
