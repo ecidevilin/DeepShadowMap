@@ -321,7 +321,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DirectionalLight: {fileID: 170076734}
   ShadowMapMaterial: {fileID: 2100000, guid: d9d0bb0ee2510fe49b6d98e07c7c0f33, type: 2}
-  HairAlpha: 0.5
+  HairAlpha: 0.75
   ResetBuffer: {fileID: 7200000, guid: a150b722134281e49a699211b48fab3d, type: 3}
   HashBuffer: {fileID: 7200000, guid: f7476a4c6410e4f49aeae1ae5c043f1f, type: 3}
   SortBuffer: {fileID: 7200000, guid: fec5b2d604b10aa46909e3be6ae1c04c, type: 3}

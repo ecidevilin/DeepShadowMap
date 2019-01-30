@@ -298,7 +298,8 @@
 
                 float depth = bilinearInterpolation(dx, dy, depthSamples[FILTER_SIZE][FILTER_SIZE], depthSamples[FILTER_SIZE + 1][FILTER_SIZE], depthSamples[FILTER_SIZE][FILTER_SIZE + 1], depthSamples[FILTER_SIZE + 1][FILTER_SIZE + 1]);
                 float shading = bilinearInterpolation(dx, dy, shadingSamples[FILTER_SIZE][FILTER_SIZE], shadingSamples[FILTER_SIZE + 1][FILTER_SIZE], shadingSamples[FILTER_SIZE][FILTER_SIZE + 1], shadingSamples[FILTER_SIZE + 1][FILTER_SIZE + 1]);
-				
+				shading += 0.25f;// brighter shadow
+				// In shadow : depth < posInLight.z 
                 return float4(finalColor * clamp(shading * exp(10.0f * (depth - posInLight.z)), 0.1f, 1.0f), 1.0f);
 
             }
