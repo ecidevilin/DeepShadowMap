@@ -47,17 +47,41 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     DoublyLinkedNode temp;
     // Sort
     int j;
-    for (i = 1; i < numElems; i++)
+    // insertion sort
+    // for (i = 1; i < numElems; i++)
+    // {
+    //     temp = DoublyLinkedList[i + offset];
+    //     j = i - 1;
+    //     [loop]
+    //     while (j >= 0 && temp.depth < DoublyLinkedList[j + offset].depth)
+    //     {
+    //         DoublyLinkedList[j + 1 + offset] = DoublyLinkedList[j + offset];
+    //         j = j - 1;
+    //     }
+    //     DoublyLinkedList[j + 1 + offset] = temp;
+    // }
+    // selection sort
+    for (i = 0; i < numElems; i++)
     {
-        temp = DoublyLinkedList[i + offset];
-        j = i - 1;
-        [loop]
-        while (j >= 0 && temp.depth < DoublyLinkedList[j + offset].depth)
+        int idx = i;
+        temp = DoublyLinkedList[idx + offset];
+        for (j = i + 1; j < numElems; j++)
         {
-            DoublyLinkedList[j + 1 + offset] = DoublyLinkedList[j + offset];
-            j = j - 1;
+            if (DoublyLinkedList[j + offset].depth < temp.depth)
+            {
+                idx = j;
+                temp = DoublyLinkedList[j + offset];
+            }
         }
-        DoublyLinkedList[j + 1 + offset] = temp;
+        if (idx == i)
+        {
+            continue;
+        }
+        else
+        {
+            DoublyLinkedList[idx + offset] = DoublyLinkedList[i + offset];
+            DoublyLinkedList[i + offset] = temp;
+        }
     }
 
     // Shade
