@@ -155,7 +155,7 @@
 					for (y = 0; y < FILTER_SIZE * 2 + 2; y++)
 					{
 						depthSamples[x][y] = 1.0f;
-						shadingSamples[x][y] = 0.0f;
+						shadingSamples[x][y] = 1.0f;
 					}
 				}
                 for(x = 0; x < FILTER_SIZE * 2 + 2; x++)
