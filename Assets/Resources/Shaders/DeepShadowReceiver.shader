@@ -89,7 +89,7 @@
                          }
                          ++current;
                          entry = tempEntry;
-                     }
+					 }
                  }
                  else
                  {
@@ -110,7 +110,7 @@
                              break;
                          }
                         
-                     }
+					 }
                  }
 				 entryNeighbors = NeighborsList[current];
              }
@@ -166,17 +166,14 @@
                         {
 							currentX = max(0, min(Dimension - 1, currentX));
 							currentY = max(0, min(Dimension - 1, currentY));
-                            int start = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
-                            if(DoublyLinkedList[start].headOrTail == -1)
+							currentXEntry = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
+                            if(DoublyLinkedList[currentXEntry].headOrTail == -1)
                             {
                                 depthSamples[x][y] = 1.0f;
                                 shadingSamples[x][y] = 1.0f;
                                 currentY++;
                                 continue;
                             }
-
-                            noXLink = false;
-                            currentXEntry = start;
                         }
 
                         depthSearch(currentXEntry, currentXEntryNeighbors, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
