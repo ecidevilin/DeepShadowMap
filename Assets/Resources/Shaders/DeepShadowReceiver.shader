@@ -178,9 +178,9 @@
 
                         depthSearch(currentXEntry, currentXEntryNeighbors, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
                         currentY++;
-                        
-						noXLink = currentXEntryNeighbors.neighbor == -1;
+
 						currentXEntry = currentXEntryNeighbors.neighbor;
+						noXLink = currentXEntry == -1;
                     }
 
                     currentX++;

@@ -13,6 +13,7 @@ public class DeepShadowMap : MonoBehaviour
     private ComputeBuffer NeighborsList;
     
     public Light DirectionalLight;
+    private Camera LightCamera;
     public Material ShadowMapMaterial;
     [Range(0, 1)]
     public float HairAlpha = 0.7f;
@@ -158,7 +159,7 @@ public class DeepShadowMap : MonoBehaviour
             lightMatrix.SetRow(2, -forward);
         }
         BeforeForwardOpaque.SetViewMatrix(lightMatrix);
-        Matrix4x4 projMatrix = Matrix4x4.Ortho(-10, 10, -10, 10, 0.1f, 10);
+        Matrix4x4 projMatrix = Matrix4x4.Ortho(-2, 2, -2, 2, 0.1f, 10);
         BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
         BeforeForwardOpaque.SetViewport(new Rect(0, 0, dimension, dimension));
 
