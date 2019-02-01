@@ -67,6 +67,8 @@
                  int current = entryIdx;
                  DoublyLinkedNode entry = DoublyLinkedList[entryIdx];
                  int i;
+
+
                  if(entry.depth < z)
                  {
                      for(i = 0; i < NUM_BUF_ELEMENTS; i++)
@@ -181,10 +183,7 @@
                         currentY++;
                         
 						noXLink = currentXEntryNeighbors.neighbor == -1;
-                        //if(!noXLink)
-                        {
-                            currentXEntry = currentXEntryNeighbors.neighbor;
-                        }
+						currentXEntry = currentXEntryNeighbors.neighbor;
                     }
 
                     currentX++;
