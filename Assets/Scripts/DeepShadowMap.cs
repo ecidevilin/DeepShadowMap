@@ -13,7 +13,6 @@ public class DeepShadowMap : MonoBehaviour
     private ComputeBuffer NeighborsList;
     
     public Light DirectionalLight;
-    private Camera LightCamera;
     public Material ShadowMapMaterial;
     [Range(0, 1)]
     public float HairAlpha = 0.7f;
