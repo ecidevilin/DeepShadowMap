@@ -64,7 +64,6 @@
              void depthSearch(inout int entryIdx, inout NeighborsNode entryNeighbors, float z, out float outDepth, out float outShading)
              {
                  DoublyLinkedNode tempEntry;
-                 int newNum = -1;	// -1 means not changed
                  int current = entryIdx;
                  DoublyLinkedNode entry = DoublyLinkedList[entryIdx];
                  int i;
@@ -86,7 +85,7 @@
                              outShading = entry.shading;
                              break;
                          }
-                         newNum = ++current;
+                         ++current;
                          entry = tempEntry;
                      }
                  }
@@ -100,8 +99,7 @@
                              outShading = 1.0f;
                              break;
                          }
-                         newNum = --current;
-                         entry = DoublyLinkedList[newNum];
+                         entry = DoublyLinkedList[--current];
 
                          if(entry.depth < z)
                          {
@@ -112,9 +110,7 @@
                         
                      }
                  }
-                
-                 if(newNum != -1)	// finally lookup the neighbors if we changed entry
-                     entryNeighbors = NeighborsList[newNum];
+				 entryNeighbors = NeighborsList[current];
              }
 
             v2f vert (appdata v)
@@ -164,16 +160,10 @@
 
                     for(y = 0; y < FILTER_SIZE * 2 + 2; y++)
                     {
-                        if(currentX < 0 || currentY < 0 || currentX >= Dimension || currentY >= Dimension)
-                        {
-                            depthSamples[x][y] = 1.0f;	
-                            shadingSamples[x][y] = 1.0f;
-                            currentY++;
-                            continue;
-                        }
-                        
                         if(noXLink)
                         {
+							currentX = max(0, min(Dimension - 1, currentX));
+							currentY = max(0, min(Dimension - 1, currentY));
                             int start = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
                             if(DoublyLinkedList[start].headOrTail == -1)
                             {
@@ -185,21 +175,15 @@
 
                             noXLink = false;
                             currentXEntry = start;
-                            currentXEntryNeighbors = NeighborsList[start];
                         }
 
                         depthSearch(currentXEntry, currentXEntryNeighbors, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
                         currentY++;
                         
-                        if(!noXLink && currentXEntryNeighbors.neighbor != -1)
+						noXLink = currentXEntryNeighbors.neighbor == -1;
+                        //if(!noXLink)
                         {
                             currentXEntry = currentXEntryNeighbors.neighbor;
-                            currentXEntryNeighbors = NeighborsList[currentXEntryNeighbors.neighbor];
-                        }
-                        else
-                        {
-                            noXLink = true;
-                            continue;
                         }
                     }
 
