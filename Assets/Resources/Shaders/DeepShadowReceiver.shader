@@ -162,17 +162,6 @@
                 {
                     int currentY = yLight - FILTER_SIZE;
 
-                    if(noXLink && !(currentX < 0 || currentY < 0 || currentX >= Dimension || currentY >= Dimension))
-                    {
-                        int start = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
-                        if(DoublyLinkedList[start].headOrTail != -1)
-                        {
-                            currentXEntry = start;
-                            currentXEntryNeighbors = NeighborsList[start];
-                            noXLink = false;
-                        }
-                    }
-
                     for(y = 0; y < FILTER_SIZE * 2 + 2; y++)
                     {
                         if(currentX < 0 || currentY < 0 || currentX >= Dimension || currentY >= Dimension)
@@ -215,16 +204,6 @@
                     }
 
                     currentX++;
-                    if(!noXLink && currentXEntryNeighbors.neighbor != -1)
-                    {
-                        currentXEntry = currentXEntryNeighbors.neighbor;
-                        currentXEntryNeighbors = NeighborsList[currentXEntryNeighbors.neighbor];
-                    }
-                    else
-                    {
-                        noXLink = true;
-                        continue;
-                    }
                 }
             #if FILTER_SIZE > 0
                 float depthSamples2[2][FILTER_SIZE * 2 + 2];
