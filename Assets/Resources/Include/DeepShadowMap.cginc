@@ -22,6 +22,6 @@ struct NeighborsNode
 	int neighbor;
 };
 #define NUM_BUF_ELEMENTS 16
-#define FILTER_SIZE 1
+#define FILTER_SIZE 0
 
 uint Dimension;
