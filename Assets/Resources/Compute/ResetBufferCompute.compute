@@ -4,7 +4,7 @@
 #pragma kernel KernelResetDoublyLinkedList
 #pragma kernel KernelResetNeighborsList
 #include "../Include/DeepShadowMap.cginc"
-RWStructuredBuffer<HeaderNode> HeaderList;
+RWStructuredBuffer<int> HeaderList;
 RWStructuredBuffer<LinkedNode> LinkedList;
 RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 RWStructuredBuffer<NeighborsNode> NeighborsList;
@@ -12,7 +12,7 @@ RWStructuredBuffer<NeighborsNode> NeighborsList;
 [numthreads(8,8,1)]
 void KernelResetHeaderList(uint3 id : SV_DispatchThreadID)
 {
-	HeaderList[id.y * Dimension + id.x].start = -1;
+	HeaderList[id.y * Dimension + id.x] = -1;
 }
 
 

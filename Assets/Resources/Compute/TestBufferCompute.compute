@@ -6,7 +6,7 @@
 #pragma kernel KernelTestNeighborsList
 #include "../Include/DeepShadowMap.cginc"
 
-StructuredBuffer<HeaderNode> HeaderList;
+StructuredBuffer<int> HeaderList;
 StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 StructuredBuffer<LinkedNode> LinkedList;
 RWStructuredBuffer<NeighborsNode> NeighborsList;
@@ -22,7 +22,7 @@ void KernelResetTestResult(uint3 id : SV_DispatchThreadID)
 [numthreads(8,8,1)]
 void KernelTestHeaderList(uint3 id : SV_DispatchThreadID)
 {
-    int start = HeaderList[id.y * Dimension + id.x].start;
+    int start = HeaderList[id.y * Dimension + id.x];
     if (start == -1)
     {
         TestRt[id.xy] = float4(0,0,0,1);
@@ -37,7 +37,7 @@ void KernelTestHeaderList(uint3 id : SV_DispatchThreadID)
 void KernelTestLinkedList(uint3 id : SV_DispatchThreadID)
 {
 
-    int start = HeaderList[id.y * Dimension + id.x].start;
+    int start = HeaderList[id.y * Dimension + id.x];
     if (start == -1)
     {
         TestRt[id.xy] = float4(0, 0, 0, 1);

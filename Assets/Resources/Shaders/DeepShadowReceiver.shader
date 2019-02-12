@@ -17,7 +17,6 @@
 
             #include "UnityCG.cginc"
 			#include "../Include/DeepShadowMap.cginc"
-            StructuredBuffer<HeaderNode> HeaderList;
             StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
             StructuredBuffer<NeighborsNode> NeighborsList;
 

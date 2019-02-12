@@ -2,7 +2,7 @@
 #pragma kernel KernelSortDeepShadowMap
 
 #include "../Include/DeepShadowMap.cginc"
-StructuredBuffer<HeaderNode> HeaderList;
+StructuredBuffer<int> HeaderList;
 StructuredBuffer<LinkedNode> LinkedList;
 RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 
@@ -13,7 +13,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	{
 		return;
 	}
-	int start = HeaderList[id.y * Dimension + id.x].start;
+	int start = HeaderList[id.y * Dimension + id.x];
 
     int offset = (id.y * Dimension + id.x) * NUM_BUF_ELEMENTS;
 	if (start == -1)

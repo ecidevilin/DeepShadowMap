@@ -2,7 +2,7 @@
 #pragma kernel KernelHashDeepShadowMap
 
 #include "../Include/DeepShadowMap.cginc"
-RWStructuredBuffer<HeaderNode> HeaderList;
+RWStructuredBuffer<int> HeaderList;
 RWStructuredBuffer<LinkedNode> LinkedList;
 
 [numthreads(1,1,1)]
@@ -10,6 +10,6 @@ void KernelHashDeepShadowMap (uint3 id : SV_DispatchThreadID)
 {
     int originalVal;
     uint idx = LinkedList[id.x].index;
-    InterlockedExchange(HeaderList[idx].start, id.x, originalVal);
+    InterlockedExchange(HeaderList[idx], id.x, originalVal);
     LinkedList[id.x].next = originalVal;
 }
