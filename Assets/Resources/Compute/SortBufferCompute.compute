@@ -72,14 +72,10 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
                 temp = DoublyLinkedList[j + offset];
             }
         }
-        if (idx == i)
+        if (idx != i)
         {
-            continue;
-        }
-        else
-        {
-            DoublyLinkedList[idx + offset] = DoublyLinkedList[i + offset];
-            DoublyLinkedList[i + offset] = temp;
+			DoublyLinkedList[idx + offset] = DoublyLinkedList[i + offset];
+			DoublyLinkedList[i + offset] = temp;
         }
     }
 
