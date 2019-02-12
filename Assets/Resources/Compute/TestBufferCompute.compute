@@ -54,7 +54,7 @@ void KernelTestLinkedList(uint3 id : SV_DispatchThreadID)
         }
         currentXEntry = LinkedList[currentXEntry.next];
     }
-    TestRt[id.xy] = float4(currentXEntry.position.z, 0, currentXEntry.alpha, 1);
+    TestRt[id.xy] = float4(currentXEntry.depth, 0, currentXEntry.alpha, 1);
 }
 
 [numthreads(8,8,1)]

@@ -9,7 +9,7 @@ RWStructuredBuffer<LinkedNode> LinkedList;
 void KernelHashDeepShadowMap (uint3 id : SV_DispatchThreadID)
 {
     int originalVal;
-    float3 pos = LinkedList[id.x].position;
-    InterlockedExchange(HeaderList[((uint)pos.y) * Dimension + (uint)pos.x].start, id.x, originalVal);
+    uint idx = LinkedList[id.x].index;
+    InterlockedExchange(HeaderList[idx].start, id.x, originalVal);
     LinkedList[id.x].next = originalVal;
 }

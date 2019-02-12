@@ -34,7 +34,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     {
         numElems++;
         node = LinkedList[current];
-        DoublyLinkedList[i + offset].depth = node.position.z + 1/256.0;
+        DoublyLinkedList[i + offset].depth = node.depth + 1/256.0;
         DoublyLinkedList[i + offset].shading = node.alpha;
         DoublyLinkedList[i + offset].headOrTail = 0;
         next = node.next;

@@ -57,11 +57,13 @@
                 //int originalVal;
                 //InterlockedExchange(HeaderList[((uint)i.vertex.y) * Dimension + (uint)i.vertex.x].start, counter, originalVal);
                 //LinkedList[counter].next = originalVal;
-                LinkedList[counter].position = posInLight;
-                LinkedList[counter].alpha = _HairAlpha;
+				
+                LinkedList[counter].index = ((uint)i.vertex.y) * Dimension + (uint)i.vertex.x;
+				LinkedList[counter].depth = posInLight.z;
+				LinkedList[counter].alpha = _HairAlpha;
 
 #ifdef _DEBUG_DSM
-                return fixed4(LinkedList[counter].position.z, LinkedList[counter].alpha, counter, 1);
+                return fixed4(LinkedList[counter].depth, LinkedList[counter].alpha, counter, 1);
 #endif
 
             }
