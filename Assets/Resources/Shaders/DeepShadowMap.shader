@@ -58,7 +58,7 @@
                 //InterlockedExchange(HeaderList[((uint)i.vertex.y) * Dimension + (uint)i.vertex.x].start, counter, originalVal);
                 //LinkedList[counter].next = originalVal;
 				
-                LinkedList[counter].index = ((uint)i.vertex.y) * Dimension + (uint)i.vertex.x;
+                LinkedList[counter].index = ((uint)posInLight.y) * Dimension + (uint)posInLight.x;
 				LinkedList[counter].depth = posInLight.z;
 				LinkedList[counter].alpha = _HairAlpha;
 
