@@ -6,6 +6,12 @@
 
 ![Colored](Pic/Hair1.png)
 
+## On iPhone XS
+
+![ipxs](Pic/ipxs.png)
+
+Only 13 FPS. (- -b)
+
 # Reference
 
 * GPU Pro4 IV 1. Real-Time Deep Shadow Maps
