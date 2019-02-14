@@ -12,7 +12,7 @@ RWStructuredBuffer<NeighborsNode> NeighborsList;
 [numthreads(8,8,1)]
 void KernelResetHeaderList(uint3 id : SV_DispatchThreadID)
 {
-	HeaderList[id.y * Dimension + id.x] = -1;
+	HeaderList[id.y * Dimension + id.x] = 0;
 }
 
 
@@ -26,7 +26,7 @@ void KernelResetLinkedList(uint3 id : SV_DispatchThreadID)
 [numthreads(8,8,1)]
 void KernelResetDoublyLinkedList(uint3 id :SV_DispatchThreadID)
 {
-	DoublyLinkedList[id.y * Dimension + id.x] = (DoublyLinkedNode)0;
+	DoublyLinkedList[id.y * Dimension + id.x].headOrTail = -1;
 }
 
 [numthreads(8,8,1)]

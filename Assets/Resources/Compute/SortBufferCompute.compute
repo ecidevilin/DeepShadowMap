@@ -3,7 +3,7 @@
 
 #include "../Include/DeepShadowMap.cginc"
 StructuredBuffer<int> HeaderList;
-StructuredBuffer<LinkedNode> LinkedList;
+//StructuredBuffer<LinkedNode> LinkedList;
 RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 
 [numthreads(8,8,1)]
@@ -14,34 +14,35 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 		return;
 	}
 	int idx = id.y * Dimension + id.x;
-	int start = HeaderList[idx];
+	//int start = HeaderList[idx];
 
-    int offset = idx * NUM_BUF_ELEMENTS;
-	if (start == -1)
+	int offset = idx * NUM_BUF_ELEMENTS;
+	int numElems = HeaderList[idx];
+	if (numElems == 0)
 	{
-        DoublyLinkedList[offset].headOrTail = -1;
+		DoublyLinkedList[offset].headOrTail = -1;
         return;
     }
 
-    int current = start;
-    int numElems = 0;
-    LinkedNode node;
+    //int current = start;
+	numElems = min(numElems, NUM_BUF_ELEMENTS);
+    //LinkedNode node;
 
     int i;
     // Copy
-    for (i = 0; i < NUM_BUF_ELEMENTS; i++)
-    {
-        numElems++;
-        node = LinkedList[current];
-        DoublyLinkedList[i + offset].depth = node.depth + 1/256.0;
-        DoublyLinkedList[i + offset].shading = node.alpha;
-        DoublyLinkedList[i + offset].headOrTail = 0;
-		current = node.next;
-        if (current == -1)
-        {
-            break;
-        }
-    }
+  //  for (i = 0; i < NUM_BUF_ELEMENTS; i++)
+  //  {
+  //      numElems++;
+  //      node = LinkedList[current];
+  //      DoublyLinkedList[i + offset].depth = node.depth + 1/256.0;
+  //      DoublyLinkedList[i + offset].shading = node.alpha;
+  //      DoublyLinkedList[i + offset].headOrTail = 0;
+		//current = node.next;
+  //      if (current == -1)
+  //      {
+  //          break;
+  //      }
+  //  }
 
     DoublyLinkedNode temp;
     // Sort
@@ -60,6 +61,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     //     DoublyLinkedList[j + 1 + offset] = temp;
     // }
     // selection sort
+
     for (i = 0; i < numElems; i++)
     {
         int idx = i;
@@ -91,6 +93,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 		}
         shadingBefore = shadingCurrent;
 		DoublyLinkedList[i + offset].shading = shadingCurrent;
+		DoublyLinkedList[i + offset].headOrTail = 0;
     }
     DoublyLinkedList[offset].headOrTail = 1;
     DoublyLinkedList[numElems - 1 + offset].headOrTail = -1;

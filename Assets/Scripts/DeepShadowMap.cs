@@ -78,6 +78,7 @@ public class DeepShadowMap : MonoBehaviour
         ShadowMapMaterial.SetInt("Dimension", dimension);
         ShadowMapMaterial.SetBuffer("HeaderList", HeaderList);
         ShadowMapMaterial.SetBuffer("LinkedList", LinkedList);
+        ShadowMapMaterial.SetBuffer("DoublyLinkedList", DoublyLinkedList);
 
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
         KernelResetLinkedList = ResetBuffer.FindKernel("KernelResetLinkedList");
@@ -190,8 +191,8 @@ public class DeepShadowMap : MonoBehaviour
             }
         }
         BeforeForwardOpaque.EndSample("ShadowMapMaterial");
-        BeforeForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
-        BeforeForwardOpaque.DispatchCompute(HashBuffer, KernelHashDeepShadowMap, counterBuffer, 0);
+        //BeforeForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
+        //BeforeForwardOpaque.DispatchCompute(HashBuffer, KernelHashDeepShadowMap, counterBuffer, 0);
 
 
         BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, dimension / 8, dimension / 8, 1);
@@ -231,8 +232,8 @@ public class DeepShadowMap : MonoBehaviour
         AfterForwardOpaque.Clear();
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
         //AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
-        //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, dimension / 8, dimension * elements / 8, 1);
+        //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, dimension / 8, dimension * elements / 8, 1);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetNeighborsList, dimension / 8, dimension * elements / 8, 1);
 
     }

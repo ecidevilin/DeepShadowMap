@@ -19,8 +19,9 @@
             #include "UnityCG.cginc"
             #include "../Include/DeepShadowMap.cginc"
             float _HairAlpha;
-			//RWStructuredBuffer<HeaderNode> HeaderList;
-			RWStructuredBuffer<LinkedNode> LinkedList;
+			RWStructuredBuffer<int> HeaderList;
+			//RWStructuredBuffer<LinkedNode> LinkedList;
+			RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 			float4x4 _LightVP;
 #define _DEBUG_DSM
 
@@ -53,17 +54,21 @@
                 posInLight += 1;
                 posInLight *= 0.5f;
                 posInLight.xy *= Dimension;
-                int counter = LinkedList.IncrementCounter();
-                //int originalVal;
-                //InterlockedExchange(HeaderList[((uint)i.vertex.y) * Dimension + (uint)i.vertex.x].start, counter, originalVal);
-                //LinkedList[counter].next = originalVal;
-				
-                LinkedList[counter].index = ((uint)posInLight.y) * Dimension + (uint)posInLight.x;
-				LinkedList[counter].depth = posInLight.z;
-				LinkedList[counter].alpha = _HairAlpha;
+    //            int counter = LinkedList.IncrementCounter();
+				//
+    //            LinkedList[counter].index = ((uint)posInLight.y) * Dimension + (uint)posInLight.x;
+				//LinkedList[counter].depth = posInLight.z;
+				//LinkedList[counter].alpha = _HairAlpha;
 
+				uint idx = ((uint)posInLight.y) * Dimension + (uint)posInLight.x;
+				uint offset = idx * NUM_BUF_ELEMENTS;
+				int originalVal;
+				InterlockedAdd(HeaderList[idx], 1, originalVal);
+				originalVal = min(NUM_BUF_ELEMENTS - 1, originalVal);
+				DoublyLinkedList[offset + originalVal].depth = posInLight.z;
+				DoublyLinkedList[offset + originalVal].shading = _HairAlpha;
 #ifdef _DEBUG_DSM
-                return fixed4(LinkedList[counter].depth, LinkedList[counter].alpha, counter, 1);
+                return fixed4(DoublyLinkedList[offset + originalVal].depth, DoublyLinkedList[offset + originalVal].shading, originalVal, 1);
 #endif
 
             }
