@@ -1,0 +1,54 @@
+﻿
+#pragma kernel KernelFitDeepShadowMap
+#include "../Include/DeepShadowMap.cginc"
+
+StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
+RWStructuredBuffer<FittingFunc> FittingFuncList;
+
+[numthreads(8,8,1)]
+void KernelFitDeepShadowMap(uint3 id : SV_DispatchThreadID)
+{
+	if (id.y > Dimension - 1 || id.x > Dimension - 1)
+	{
+		return;
+	}
+	int offset = (id.y * Dimension + id.x) * NUM_BUF_ELEMENTS;
+	if (DoublyLinkedList[offset].headOrTail == -1)
+	{
+		return;
+	}
+
+
+	int current = offset;
+	uint numElems = 1;
+	DoublyLinkedNode node = DoublyLinkedList[current];;
+	DoublyLinkedNode nodeNext;
+	float maxDelta = 0;
+	uint maxDeltaIdx = 0;
+
+	FittingFunc func;
+	float2 f[4];
+	float sumXY = 0;
+	float sumX = 0;
+	float sumY = 0;
+	float sumXX = 0;
+	int n = NUM_BUF_ELEMENTS / 4;
+	for (uint k = 0; k < 4; k++)
+	{
+		for (uint i = 0; i < NUM_BUF_ELEMENTS / 4; i++)
+		{
+			int idx = offset + k * NUM_BUF_ELEMENTS / 4 + i;
+			DoublyLinkedNode node = DoublyLinkedList[idx];
+			float x = i * 4 / (float)NUM_BUF_ELEMENTS;
+			float y = node.headOrTail == -1 ? 1 : node.depth;
+			sumXY += x * y;
+			sumX += x;
+			sumY += y;
+			sumXX += x * x;
+		}
+		f[k].x = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+		f[k].y = sumY / n - f[k].x * sumX / n;
+	}
+	func.f = f;
+	FittingFuncList[id.y * Dimension + id.x] = func;
+}

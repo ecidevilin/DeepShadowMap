@@ -60,10 +60,10 @@
 				
                 LinkedList[counter].index = ((uint)posInLight.y) * Dimension + (uint)posInLight.x;
 				LinkedList[counter].depth = posInLight.z;
-				LinkedList[counter].alpha = _HairAlpha;
+				//LinkedList[counter].alpha = _HairAlpha;
 
 #ifdef _DEBUG_DSM
-                return fixed4(LinkedList[counter].depth, LinkedList[counter].alpha, counter, 1);
+                return fixed4(LinkedList[counter].depth, 0, counter, 1);
 #endif
 
             }

@@ -3,61 +3,62 @@
 #pragma kernel KernelTestHeaderList
 #pragma kernel KernelTestLinkedList
 #pragma kernel KernelTestDoublyLinkedList
-#pragma kernel KernelTestNeighborsList
+#pragma kernel KernelTestFittingFuncList
+
 #include "../Include/DeepShadowMap.cginc"
 
 StructuredBuffer<int> HeaderList;
 StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 StructuredBuffer<LinkedNode> LinkedList;
-RWStructuredBuffer<NeighborsNode> NeighborsList;
+StructuredBuffer<FittingFunc> FittingFuncList;
 RWTexture2D<float4> TestRt;
 int TestIndex;
 
-[numthreads(8,8,1)]
+[numthreads(8, 8, 1)]
 void KernelResetTestResult(uint3 id : SV_DispatchThreadID)
 {
-    TestRt[id.xy] = float4(0,0,0,1);
+	TestRt[id.xy] = float4(0, 0, 0, 1);
 }
 
-[numthreads(8,8,1)]
+[numthreads(8, 8, 1)]
 void KernelTestHeaderList(uint3 id : SV_DispatchThreadID)
 {
-    int start = HeaderList[id.y * Dimension + id.x];
-    if (start == -1)
-    {
-        TestRt[id.xy] = float4(0,0,0,1);
-    }
-    else
-    {
-        TestRt[id.xy] = float4(1,0,0,1);
-    }
+	int start = HeaderList[id.y * Dimension + id.x];
+	if (start == -1)
+	{
+		TestRt[id.xy] = float4(0, 0, 0, 1);
+	}
+	else
+	{
+		TestRt[id.xy] = float4(1, 0, 0, 1);
+	}
 }
 
-[numthreads(8,8,1)]
+[numthreads(8, 8, 1)]
 void KernelTestLinkedList(uint3 id : SV_DispatchThreadID)
 {
 
-    int start = HeaderList[id.y * Dimension + id.x];
-    if (start == -1)
-    {
-        TestRt[id.xy] = float4(0, 0, 0, 1);
-        return;
-    }
-    LinkedNode currentXEntry = LinkedList[start];
-    int i = 1;
-    for (;i < TestIndex; i++)
-    {
-        if (currentXEntry.next == -1)
-        {
-            TestRt[id.xy] = float4(0, 0, 0, 1);
-            return;
-        }
-        currentXEntry = LinkedList[currentXEntry.next];
-    }
-    TestRt[id.xy] = float4(currentXEntry.depth, 0, currentXEntry.alpha, 1);
+	int start = HeaderList[id.y * Dimension + id.x];
+	if (start == -1)
+	{
+		TestRt[id.xy] = float4(0, 0, 0, 1);
+		return;
+	}
+	LinkedNode currentXEntry = LinkedList[start];
+	int i = 1;
+	for (; i < TestIndex; i++)
+	{
+		if (currentXEntry.next == -1)
+		{
+			TestRt[id.xy] = float4(0, 0, 0, 1);
+			return;
+		}
+		currentXEntry = LinkedList[currentXEntry.next];
+	}
+	TestRt[id.xy] = float4(currentXEntry.depth, 0, 0, 1);
 }
 
-[numthreads(8,8,1)]
+[numthreads(8, 8, 1)]
 void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
 {
 	int offset = NUM_BUF_ELEMENTS * (id.y * Dimension + id.x);
@@ -73,24 +74,14 @@ void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
 		}
 		i++;
 	} while (i < TestIndex);
-	TestRt[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, currentXEntry.headOrTail, 1);
+	//TestRt[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, currentXEntry.headOrTail, 1);
+	TestRt[id.xy] = float4(currentXEntry.depth, 1, currentXEntry.headOrTail, 1);
 }
 
-[numthreads(8,8,1)]
-void KernelTestNeighborsList(uint3 id : SV_DispatchThreadID)
+[numthreads(8, 8, 1)]
+void KernelTestFittingFuncList(uint3 id : SV_DispatchThreadID)
 {
-	int offset = NUM_BUF_ELEMENTS * (id.y * Dimension + id.x);
-	int i = 0;
-	NeighborsNode currentXEntry;
-	do
-	{
-		currentXEntry = NeighborsList[offset++];
-		if (currentXEntry.neighbor == -1)
-		{
-			TestRt[id.xy] = float4(0, 0, 0, 1);
-			return;
-		}
-		i++;
-	} while (i < TestIndex);
-	TestRt[id.xy] = float4(1, 0, 0, 1);
+	FittingFunc func = FittingFuncList[id.y * Dimension + id.x];
+	float2 f = func.f[TestIndex % 4];
+	TestRt[id.xy] = float4(abs(f.xy), 0, 1);
 }

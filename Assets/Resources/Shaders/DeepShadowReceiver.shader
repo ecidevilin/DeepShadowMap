@@ -17,8 +17,7 @@
 
             #include "UnityCG.cginc"
 			#include "../Include/DeepShadowMap.cginc"
-            StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
-            StructuredBuffer<NeighborsNode> NeighborsList;
+			StructuredBuffer<FittingFunc> FittingFuncList;
 
             struct appdata
             {
@@ -38,6 +37,7 @@
             float3 CameraPos;
             float3 LightDir;
 			float3 _HairColor;
+			float _HairAlpha;
 
 
 			float logConv(float w0, float d1, float w1, float d2)
@@ -60,59 +60,29 @@
                 return (1-s)*(1-t)*v0 + s*(1-t)*v1 + (1-s)*t*v2 + s*t*v3;
             }
 
-             void depthSearch(inout int entryIdx, inout NeighborsNode entryNeighbors, float z, out float outDepth, out float outShading)
-             {
-                 DoublyLinkedNode tempEntry;
-                 int current = entryIdx;
-                 DoublyLinkedNode entry = DoublyLinkedList[entryIdx];
-                 int i;
+			void depthSearch(int entryIdx, float z, out float outDepth, out float outShading)
+			{
+				int idx = entryIdx / NUM_BUF_ELEMENTS;
+				FittingFunc func = FittingFuncList[idx];
+				outDepth = z;
 
 
-                 if(entry.depth < z)
-                 {
-                     for(i = 0; i < NUM_BUF_ELEMENTS; i++)
-                     {
+				float2 f0 = func.f[0];
+				float2 f1 = func.f[1];
+				float2 f2 = func.f[2];
+				float2 f3 = func.f[3];
 
-                         if(entry.headOrTail == -1)
-                         {
-                             outDepth = entry.depth;
-                             outShading = entry.shading;
-                             break;
-                         }
-                         tempEntry = DoublyLinkedList[current + 1];
-                         if(tempEntry.depth >= z)
-                         {
-                             outDepth = entry.depth;
-                             outShading = entry.shading;
-                             break;
-                         }
-                         ++current;
-                         entry = tempEntry;
-					 }
-                 }
-                 else
-                 {
-                     for(i = 0; i < NUM_BUF_ELEMENTS; i++)
-                     {
-                         if (entry.headOrTail == 1)
-                         {
-                             outDepth = entry.depth;
-                             outShading = 1.0f;
-                             break;
-                         }
-                         entry = DoublyLinkedList[--current];
-
-                         if(entry.depth < z)
-                         {
-                             outDepth = entry.depth;
-                             outShading = entry.shading;
-                             break;
-                         }
-                        
-					 }
-                 }
-				 entryNeighbors = NeighborsList[current];
-             }
+				uint p = NUM_BUF_ELEMENTS / 4;
+				float xx[5];
+				xx[0] = -1;
+				xx[1] = (z - f0.y) / f0.x * p;
+				xx[2] = (z - f1.y) / f1.x * p + p;
+				xx[3] = (z - f2.y) / f2.x * p + p * 2;
+				xx[4] = (z - f3.y) / f3.x * p + p * 3;
+				uint fi = z < f0.y ? 0 : z < f1.y ? 1 : z < f2.y ? 2 : z < f3.y ? 3 : 4;
+				float ii = xx[fi];
+				outShading = pow(1.0 - _HairAlpha, ii + 1);
+			}
 
             v2f vert (appdata v)
             {
@@ -140,115 +110,186 @@
 
                 float depthSamples[FILTER_SIZE * 2 + 2][FILTER_SIZE * 2 + 2];
                 float shadingSamples[FILTER_SIZE * 2 + 2][FILTER_SIZE * 2 + 2];
-                int currentXEntry;
-                int currentYEntry;
-                NeighborsNode currentXEntryNeighbors;
-                int currentX = xLight - FILTER_SIZE;
-                bool noXLink = true;
-                int x,y;
 
+				int x, y;
+
+				//default
+				[unroll(FILTER_SIZE * 2 + 2)]
 				for (x = 0; x < FILTER_SIZE * 2 + 2; x++)
 				{
+					[unroll(FILTER_SIZE * 2 + 2)]
 					for (y = 0; y < FILTER_SIZE * 2 + 2; y++)
 					{
 						depthSamples[x][y] = 1.0f;
 						shadingSamples[x][y] = 1.0f;
 					}
 				}
-                for(x = 0; x < FILTER_SIZE * 2 + 2; x++)
-                {
-                    int currentY = yLight - FILTER_SIZE;
 
-                    for(y = 0; y < FILTER_SIZE * 2 + 2; y++)
-                    {
-                        if(noXLink)
-                        {
-							currentX = max(0, min(Dimension - 1, currentX));
-							currentY = max(0, min(Dimension - 1, currentY));
-							currentXEntry = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
-                            if(DoublyLinkedList[currentXEntry].headOrTail == -1)
-                            {
-                                depthSamples[x][y] = 1.0f;
-                                shadingSamples[x][y] = 1.0f;
-                                currentY++;
-                                continue;
-                            }
-                        }
+				//search
+				int currentX = xLight - FILTER_SIZE;
+				bool noXLink = true;
+				int currentXEntry;
+				for (x = 0; x < FILTER_SIZE * 2 + 2; x++)
+				{
+					int currentY = yLight - FILTER_SIZE;
 
-                        depthSearch(currentXEntry, currentXEntryNeighbors, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
-                        currentY++;
+					for (y = 0; y < FILTER_SIZE * 2 + 2; y++)
+					{
+						currentXEntry = (currentY * Dimension + currentX) * NUM_BUF_ELEMENTS;
 
-						currentXEntry = currentXEntryNeighbors.neighbor;
-						noXLink = currentXEntry == -1;
-                    }
+						depthSearch(currentXEntry, posInLight.z, depthSamples[x][y], shadingSamples[x][y]);
+						currentY++;
+					}
 
-                    currentX++;
-                }
-            #if FILTER_SIZE > 0
-                float depthSamples2[2][FILTER_SIZE * 2 + 2];
-                float shadingSamples2[2][FILTER_SIZE * 2 + 2];
+					currentX++;
+				}
 
-                float oneOver = 1.0f / (FILTER_SIZE * 2 + 1);
-                
-                for(y = 0; y < FILTER_SIZE * 2 + 2; y++)
-                    for(x = FILTER_SIZE; x < FILTER_SIZE + 2; x++)
-                    {
-                        int x2 = x - FILTER_SIZE;
-                        float filteredShading = 0;
+				//filter
+#if FILTER_SIZE > 0
+				float depthSamples2[2][FILTER_SIZE * 2 + 2];
+				float shadingSamples2[2][FILTER_SIZE * 2 + 2];
 
-                        float sample0 = depthSamples[x2][y];
-                        filteredShading = shadingSamples[x2][y];
-                        x2++;
-                        
-                        float sample1 = depthSamples[x2][y];
-                        filteredShading += shadingSamples[x2][y];
-                        x2++;
-                    
-                        float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
+				float oneOver = 1.0f / (FILTER_SIZE * 2 + 1);
 
-                        for(; x2 <= x + FILTER_SIZE; x2++)
-                        {
-                            filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples[x2][y]);
-                            filteredShading += shadingSamples[x2][y];
-                        }
+				[unroll(FILTER_SIZE * 2 + 2)]
+				for (y = 0; y < FILTER_SIZE * 2 + 2; y++)
+				{
+					{
+						float filteredShading = 0;
 
-                        depthSamples2[x - FILTER_SIZE][y] = filteredDepth;
-                        shadingSamples2[x - FILTER_SIZE][y] = filteredShading * oneOver;
-                    }
+						float sample0 = depthSamples[0][y];
+						filteredShading = shadingSamples[0][y];
 
-                for(x = FILTER_SIZE; x < FILTER_SIZE + 2; x++)
-                    for(y = FILTER_SIZE; y < FILTER_SIZE + 2; y++)
-                    {
-                        int y2 = y - FILTER_SIZE;
-                        float filteredShading = 0;
+						float sample1 = depthSamples[1][y];
+						filteredShading += shadingSamples[1][y];
 
-                        float sample0 = depthSamples2[x - FILTER_SIZE][y2];
-                        filteredShading = shadingSamples2[x - FILTER_SIZE][y2];
-                        y2++;
-                        
-                        float sample1 = depthSamples2[x - FILTER_SIZE][y2];
-                        filteredShading += shadingSamples2[x - FILTER_SIZE][y2];
-                        y2++;
-                    
-                        float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
+						float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
 
-                        for(; y2 <= y + FILTER_SIZE; y2++)
-                        {
-                            filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples2[x - FILTER_SIZE][y2]);
-                            filteredShading += shadingSamples2[x - FILTER_SIZE][y2];
-                        }
+						[unroll(FILTER_SIZE * 2 - 1)]
+						for (int x2 = 2; x2 <= 2 * FILTER_SIZE; x2++)
+						{
+							filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples[x2][y]);
+							filteredShading += shadingSamples[x2][y];
+						}
 
-                        depthSamples[x][y] = filteredDepth;
-                        shadingSamples[x][y] = filteredShading * oneOver;
-                    }
-            #endif
+						depthSamples2[0][y] = filteredDepth;
+						shadingSamples2[0][y] = filteredShading * oneOver;
+					}
+					{
+						float filteredShading = 0;
+
+						float sample0 = depthSamples[1][y];
+						filteredShading = shadingSamples[1][y];
+
+						float sample1 = depthSamples[2][y];
+						filteredShading += shadingSamples[2][y];
+
+						float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
+
+						[unroll(FILTER_SIZE * 2 - 1)]
+						for (int x2 = 3; x2 <= 1 + 2 * FILTER_SIZE; x2++)
+						{
+							filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples[x2][y]);
+							filteredShading += shadingSamples[x2][y];
+						}
+
+						depthSamples2[1][y] = filteredDepth;
+						shadingSamples2[1][y] = filteredShading * oneOver;
+					}
+				}
+
+				{
+					float filteredShading = 0;
+
+					float sample0 = depthSamples2[0][0];
+					filteredShading = shadingSamples2[0][0];
+
+					float sample1 = depthSamples2[0][1];
+					filteredShading += shadingSamples2[0][1];
+
+					float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
+
+					[unroll(FILTER_SIZE * 2 - 1)]
+					for (int y2 = 2; y2 <= 2 * FILTER_SIZE; y2++)
+					{
+						filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples2[0][y2]);
+						filteredShading += shadingSamples2[0][y2];
+					}
+
+					depthSamples[FILTER_SIZE][FILTER_SIZE] = filteredDepth;
+					shadingSamples[FILTER_SIZE][FILTER_SIZE] = filteredShading * oneOver;
+				}
+				{
+					float filteredShading = 0;
+
+					float sample0 = depthSamples2[0][1];
+					filteredShading = shadingSamples2[0][1];
+
+					float sample1 = depthSamples2[0][2];
+					filteredShading += shadingSamples2[0][2];
+
+					float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
+
+					[unroll(FILTER_SIZE * 2 - 1)]
+					for (int y2 = 3; y2 <= 1 + 2 * FILTER_SIZE; y2++)
+					{
+						filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples2[0][y2]);
+						filteredShading += shadingSamples2[0][y2];
+					}
+
+					depthSamples[FILTER_SIZE][FILTER_SIZE + 1] = filteredDepth;
+					shadingSamples[FILTER_SIZE][FILTER_SIZE + 1] = filteredShading * oneOver;
+				}
+				{
+					float filteredShading = 0;
+
+					float sample0 = depthSamples2[1][0];
+					filteredShading = shadingSamples2[1][0];
+
+					float sample1 = depthSamples2[1][1];
+					filteredShading += shadingSamples2[1][1];
+
+					float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
+
+					[unroll(FILTER_SIZE * 2 - 1)]
+					for (int y2 = 2; y2 <= 2 * FILTER_SIZE; y2++)
+					{
+						filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples2[1][y2]);
+						filteredShading += shadingSamples2[1][y2];
+					}
+
+					depthSamples[FILTER_SIZE + 1][FILTER_SIZE] = filteredDepth;
+					shadingSamples[FILTER_SIZE + 1][FILTER_SIZE] = filteredShading * oneOver;
+				}
+				{
+					float filteredShading = 0;
+
+					float sample0 = depthSamples2[1][1];
+					filteredShading = shadingSamples2[1][1];
+
+					float sample1 = depthSamples2[1][2];
+					filteredShading += shadingSamples2[1][2];
+
+					float filteredDepth = logConv(oneOver, sample0, oneOver, sample1);
+
+					[unroll(FILTER_SIZE * 2 - 1)]
+					for (int y2 = 3; y2 <= 1 + 2 * FILTER_SIZE; y2++)
+					{
+						filteredDepth = logConv(1.0f, filteredDepth, oneOver, depthSamples2[1][y2]);
+						filteredShading += shadingSamples2[1][y2];
+					}
+
+					depthSamples[FILTER_SIZE + 1][FILTER_SIZE + 1] = filteredDepth;
+					shadingSamples[FILTER_SIZE + 1][FILTER_SIZE + 1] = filteredShading * oneOver;
+				}
+#endif
 
                 float dx = frac(posInLight.x);
                 float dy = frac(posInLight.y);
 
                 float depth = bilinearInterpolation(dx, dy, depthSamples[FILTER_SIZE][FILTER_SIZE], depthSamples[FILTER_SIZE + 1][FILTER_SIZE], depthSamples[FILTER_SIZE][FILTER_SIZE + 1], depthSamples[FILTER_SIZE + 1][FILTER_SIZE + 1]);
                 float shading = bilinearInterpolation(dx, dy, shadingSamples[FILTER_SIZE][FILTER_SIZE], shadingSamples[FILTER_SIZE + 1][FILTER_SIZE], shadingSamples[FILTER_SIZE][FILTER_SIZE + 1], shadingSamples[FILTER_SIZE + 1][FILTER_SIZE + 1]);
-				shading += 0.25f;// brighter shadow
+				//shading += 0.25f;// brighter shadow
 				// In shadow : depth < posInLight.z 
                 return float4(finalColor * clamp(shading * exp(10.0f * (depth - posInLight.z)), 0.1f, 1.0f), 1.0f);
 

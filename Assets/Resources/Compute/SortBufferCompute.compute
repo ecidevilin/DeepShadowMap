@@ -34,7 +34,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
         numElems++;
         node = LinkedList[current];
         DoublyLinkedList[i + offset].depth = node.depth + 1/256.0;
-        DoublyLinkedList[i + offset].shading = node.alpha;
+        //DoublyLinkedList[i + offset].shading = node.alpha;
         DoublyLinkedList[i + offset].headOrTail = 0;
 		current = node.next;
         if (current == -1)
@@ -80,18 +80,18 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     }
 
     // Shade
-    float shadingBefore = 1.0;
-    for (i = 0; i < numElems; i++)
-    {
-        float shadingCurrent = shadingBefore * (1.0 - DoublyLinkedList[i + offset].shading);
-		if (shadingBefore - shadingCurrent < 0.001)
-		{
-            numElems = i;
-			break;
-		}
-        shadingBefore = shadingCurrent;
-		DoublyLinkedList[i + offset].shading = shadingCurrent;
-    }
+  //  float shadingBefore = 1.0;
+  //  for (i = 0; i < numElems; i++)
+  //  {
+  //      float shadingCurrent = shadingBefore * (1.0 - DoublyLinkedList[i + offset].shading);
+		//if (shadingBefore - shadingCurrent < 0.001)
+		//{
+  //          numElems = i;
+		//	break;
+		//}
+  //      shadingBefore = shadingCurrent;
+		//DoublyLinkedList[i + offset].shading = shadingCurrent;
+  //  }
     DoublyLinkedList[offset].headOrTail = 1;
     DoublyLinkedList[numElems - 1 + offset].headOrTail = -1;
 }

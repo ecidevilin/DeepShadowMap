@@ -17,29 +17,20 @@ public struct LinkedNode
     public int next;
     public int index;
     public float depth;
-    public float alpha;
+    //public float alpha;
     public static int StructSize()
     {
-        return sizeof(float) * 2 + sizeof(int) * 2;
+        return sizeof(float) * 1 + sizeof(int) * 2;
     }
 };
 
 public struct DoublyLinkedNode
 {
     public float depth;
-    public float shading;
+    //public float shading;
     public int headOrTail;
     public static int StructSize()
     {
-        return sizeof(float) * 2 + sizeof(int);
-    }
-};
-
-public struct NeighborsNode
-{
-    public int neighbor;
-    public static int StructSize()
-    {
-        return sizeof(int);
+        return sizeof(float) + sizeof(int);
     }
 };
