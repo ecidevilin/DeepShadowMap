@@ -66,20 +66,26 @@
 				FittingFunc func = FittingFuncList[idx];
 				outDepth = z;
 
+				float3 f0 = func.f[0];
+				float3 f1 = func.f[1];
+				float3 f2 = func.f[2];
+				float3 f3 = func.f[3];
 
-				float2 f0 = func.f[0];
-				float2 f1 = func.f[1];
-				float2 f2 = func.f[2];
-				float2 f3 = func.f[3];
-
-				uint p = NUM_BUF_ELEMENTS / 4;
+				uint n = FittingBins[0];
+				uint o = 0;
 				float xx[5];
 				xx[0] = -1;
-				xx[1] = (z - f0.y) / f0.x * p;
-				xx[2] = (z - f1.y) / f1.x * p + p;
-				xx[3] = (z - f2.y) / f2.x * p + p * 2;
-				xx[4] = (z - f3.y) / f3.x * p + p * 3;
-				uint fi = z < f0.y ? 0 : z < f1.y ? 1 : z < f2.y ? 2 : z < f3.y ? 3 : 4;
+				xx[1] = (z - f0.y) / f0.x * n;
+				o += n;
+				n = FittingBins[1];
+				xx[2] = (z - f1.y) / f1.x * n + o;
+				o += n;
+				n = FittingBins[2];
+				xx[3] = (z - f2.y) / f2.x * n + o;
+				o += n;
+				n = FittingBins[3];
+				xx[4] = (z - f3.y) / f3.x * n + o;
+				uint fi = z < f0.z ? 0 : z < f1.z ? 1 : z < f2.z ? 2 : z < f3.z ? 3 : 4;
 				float ii = xx[fi];
 				outShading = pow(1.0 - _HairAlpha, ii + 1);
 			}
@@ -289,7 +295,7 @@
 
                 float depth = bilinearInterpolation(dx, dy, depthSamples[FILTER_SIZE][FILTER_SIZE], depthSamples[FILTER_SIZE + 1][FILTER_SIZE], depthSamples[FILTER_SIZE][FILTER_SIZE + 1], depthSamples[FILTER_SIZE + 1][FILTER_SIZE + 1]);
                 float shading = bilinearInterpolation(dx, dy, shadingSamples[FILTER_SIZE][FILTER_SIZE], shadingSamples[FILTER_SIZE + 1][FILTER_SIZE], shadingSamples[FILTER_SIZE][FILTER_SIZE + 1], shadingSamples[FILTER_SIZE + 1][FILTER_SIZE + 1]);
-				//shading += 0.25f;// brighter shadow
+				shading += 0.25f;// brighter shadow
 				// In shadow : depth < posInLight.z 
                 return float4(finalColor * clamp(shading * exp(10.0f * (depth - posInLight.z)), 0.1f, 1.0f), 1.0f);
 

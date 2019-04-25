@@ -14,51 +14,51 @@ StructuredBuffer<FittingFunc> FittingFuncList;
 RWTexture2D<float4> TestRt;
 int TestIndex;
 
-[numthreads(8, 8, 1)]
+[numthreads(8,8,1)]
 void KernelResetTestResult(uint3 id : SV_DispatchThreadID)
 {
-	TestRt[id.xy] = float4(0, 0, 0, 1);
+    TestRt[id.xy] = float4(0,0,0,1);
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(8,8,1)]
 void KernelTestHeaderList(uint3 id : SV_DispatchThreadID)
 {
-	int start = HeaderList[id.y * Dimension + id.x];
-	if (start == -1)
-	{
-		TestRt[id.xy] = float4(0, 0, 0, 1);
-	}
-	else
-	{
-		TestRt[id.xy] = float4(1, 0, 0, 1);
-	}
+    int start = HeaderList[id.y * Dimension + id.x];
+    if (start == -1)
+    {
+        TestRt[id.xy] = float4(0,0,0,1);
+    }
+    else
+    {
+        TestRt[id.xy] = float4(1,0,0,1);
+    }
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(8,8,1)]
 void KernelTestLinkedList(uint3 id : SV_DispatchThreadID)
 {
 
-	int start = HeaderList[id.y * Dimension + id.x];
-	if (start == -1)
-	{
-		TestRt[id.xy] = float4(0, 0, 0, 1);
-		return;
-	}
-	LinkedNode currentXEntry = LinkedList[start];
-	int i = 1;
-	for (; i < TestIndex; i++)
-	{
-		if (currentXEntry.next == -1)
-		{
-			TestRt[id.xy] = float4(0, 0, 0, 1);
-			return;
-		}
-		currentXEntry = LinkedList[currentXEntry.next];
-	}
-	TestRt[id.xy] = float4(currentXEntry.depth, 0, 0, 1);
+    int start = HeaderList[id.y * Dimension + id.x];
+    if (start == -1)
+    {
+        TestRt[id.xy] = float4(0, 0, 0, 1);
+        return;
+    }
+    LinkedNode currentXEntry = LinkedList[start];
+    int i = 1;
+    for (;i < TestIndex; i++)
+    {
+        if (currentXEntry.next == -1)
+        {
+            TestRt[id.xy] = float4(0, 0, 0, 1);
+            return;
+        }
+        currentXEntry = LinkedList[currentXEntry.next];
+    }
+    TestRt[id.xy] = float4(currentXEntry.depth, 0, 0, 1);
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(8,8,1)]
 void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
 {
 	int offset = NUM_BUF_ELEMENTS * (id.y * Dimension + id.x);
@@ -82,6 +82,6 @@ void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
 void KernelTestFittingFuncList(uint3 id : SV_DispatchThreadID)
 {
 	FittingFunc func = FittingFuncList[id.y * Dimension + id.x];
-	float2 f = func.f[TestIndex % 4];
-	TestRt[id.xy] = float4(abs(f.xy), 0, 1);
+	float3 f = func.f[(uint)TestIndex % 4];
+	TestRt[id.xy] = float4((f.xy), abs(f.y)-f.y, 1);
 }

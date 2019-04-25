@@ -31,16 +31,18 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     // Copy
     for (i = 0; i < NUM_BUF_ELEMENTS; i++)
     {
+		if (current == -1)
+		{
+			DoublyLinkedList[i + offset].depth = 1;
+			DoublyLinkedList[i + offset].headOrTail = -1;
+			continue;
+		}
         numElems++;
         node = LinkedList[current];
         DoublyLinkedList[i + offset].depth = node.depth + 1/256.0;
         //DoublyLinkedList[i + offset].shading = node.alpha;
         DoublyLinkedList[i + offset].headOrTail = 0;
 		current = node.next;
-        if (current == -1)
-        {
-            break;
-        }
     }
 
     DoublyLinkedNode temp;
