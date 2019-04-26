@@ -196,28 +196,6 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, dimension / 8, dimension / 8, 1);
 
         BeforeForwardOpaque.DispatchCompute(FitBuffer, KernelFitDeepShadowMap, dimension / 8, dimension / 8, 1);
-
-#if UNITY_EDITOR
-        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelResetTestResult, dimension / 8, dimension / 8, 1);
-        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
-        if (TestKernel == ETestKernel.KernelTestHeaderList)
-        {
-            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestHeaderList, dimension / 8, dimension / 8, 1);
-        }
-        else if (TestKernel == ETestKernel.KernelTestLinkedList)
-        {
-            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestLinkedList, dimension / 8, dimension / 8, 1);
-            
-        }
-        else if (TestKernel == ETestKernel.KernelTestDoublyLinkedList)
-        {
-            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestDoublyLinkedList, dimension / 8, dimension / 8, 1);
-        }
-        else if (TestKernel == ETestKernel.KernelTestFittingFuncList)
-        {
-            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestFittingFuncList, dimension / 8, dimension / 8, 1);
-        }
-#endif
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
 
         BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
@@ -227,6 +205,28 @@ public class DeepShadowMap : MonoBehaviour
 
         BeforeForwardOpaque.SetGlobalColor("_HairColor", HairColor);
 
+
+//#if UNITY_EDITOR
+//        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelResetTestResult, dimension / 8, dimension / 8, 1);
+//        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
+//        if (TestKernel == ETestKernel.KernelTestHeaderList)
+//        {
+//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestHeaderList, dimension / 8, dimension / 8, 1);
+//        }
+//        else if (TestKernel == ETestKernel.KernelTestLinkedList)
+//        {
+//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestLinkedList, dimension / 8, dimension / 8, 1);
+
+//        }
+//        else if (TestKernel == ETestKernel.KernelTestDoublyLinkedList)
+//        {
+//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestDoublyLinkedList, dimension / 8, dimension / 8, 1);
+//        }
+//        else if (TestKernel == ETestKernel.KernelTestFittingFuncList)
+//        {
+//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestFittingFuncList, dimension / 8, dimension / 8, 1);
+//        }
+//#endif
         AfterForwardOpaque.Clear();
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
         //AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);

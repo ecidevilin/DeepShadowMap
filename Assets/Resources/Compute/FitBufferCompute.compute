@@ -12,9 +12,12 @@ void KernelFitDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	{
 		return;
 	}
+	FittingFunc func = (FittingFunc)0;
 	int offset = (id.y * Dimension + id.x) * NUM_BUF_ELEMENTS;
-	if (DoublyLinkedList[offset].headOrTail == -1)
+	if (DoublyLinkedList[offset].depth == 1)
 	{
+		func.f[0] = float3(0, 1, 1);
+		FittingFuncList[offset] = func;
 		return;
 	}
 
@@ -26,14 +29,14 @@ void KernelFitDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	float maxDelta = 0;
 	uint maxDeltaIdx = 0;
 
-	FittingFunc func;
-	float3 f[4];
 	float sumXY = 0;
 	float sumX = 0;
 	float sumY = 0;
 	float sumXX = 0;
 	int idx = offset;
 	uint i = 0;
+
+	float3 f[4];
 
 	for (uint k = 0; k < 4; k++)
 	{
@@ -48,7 +51,7 @@ void KernelFitDeepShadowMap(uint3 id : SV_DispatchThreadID)
 			sumY += y;
 			sumXX += x * x;
 		}
-		f[k].x = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+		f[k].x = (n * sumXX - sumX * sumX) / (n * sumXY - sumX * sumY); //Reciprocal
 		f[k].y = sumY / n - f[k].x * sumX / n;
 		f[k].z = DoublyLinkedList[offset].depth;
 		offset += n;

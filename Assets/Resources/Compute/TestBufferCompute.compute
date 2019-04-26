@@ -67,15 +67,10 @@ void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
 	do
 	{
 		currentXEntry = DoublyLinkedList[offset++];
-		if (currentXEntry.headOrTail == -1)
-		{
-			TestRt[id.xy] = float4(0, 0, 1, 1);
-			return;
-		}
 		i++;
 	} while (i < TestIndex);
 	//TestRt[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, currentXEntry.headOrTail, 1);
-	TestRt[id.xy] = float4(currentXEntry.depth, 1, currentXEntry.headOrTail, 1);
+	TestRt[id.xy] = float4(currentXEntry.depth, 1, 1, 1);
 }
 
 [numthreads(8, 8, 1)]
