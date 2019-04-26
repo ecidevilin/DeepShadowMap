@@ -17,7 +17,7 @@ void KernelFitDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	if (DoublyLinkedList[offset].depth == 1)
 	{
 		func.f[0] = float3(0, 1, 1);
-		FittingFuncList[offset] = func;
+		FittingFuncList[(id.y * Dimension + id.x)] = func;
 		return;
 	}
 
