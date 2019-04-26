@@ -1,12 +1,10 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel KernelResetHeaderList
 #pragma kernel KernelResetLinkedList
-#pragma kernel KernelResetDoublyLinkedList
 #pragma kernel KernelResetFittingFuncList
 #include "../Include/DeepShadowMap.cginc"
 RWStructuredBuffer<int> HeaderList;
 RWStructuredBuffer<LinkedNode> LinkedList;
-RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 RWStructuredBuffer<FittingFunc> FittingFuncList;
 
 [numthreads(8,8,1)]
@@ -21,12 +19,6 @@ void KernelResetLinkedList(uint3 id : SV_DispatchThreadID)
 {
 	int counter = LinkedList.DecrementCounter();
 	LinkedList[counter] = (LinkedNode)0;
-}
-
-[numthreads(8,8,1)]
-void KernelResetDoublyLinkedList(uint3 id :SV_DispatchThreadID)
-{
-	DoublyLinkedList[id.y * Dimension + id.x] = (DoublyLinkedNode)0;
 }
 
 [numthreads(8, 8, 1)]

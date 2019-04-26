@@ -4,7 +4,7 @@
 #include "../Include/DeepShadowMap.cginc"
 StructuredBuffer<int> HeaderList;
 StructuredBuffer<LinkedNode> LinkedList;
-RWStructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
+RWStructuredBuffer<FittingFunc> FittingFuncList;
 
 [numthreads(8,8,1)]
 void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
@@ -17,52 +17,84 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	int start = HeaderList[idx];
 
     int offset = idx * NUM_BUF_ELEMENTS;
+	FittingFunc func = (FittingFunc)0;
 	if (start == -1)
 	{
-        DoublyLinkedList[offset].depth = 1;
+		func.f[0] = float3(0, 1, 1);
+		FittingFuncList[(id.y * Dimension + id.x)] = func;
         return;
     }
 
     int current = start;
-    int numElems = 0;
+    uint numElems = 0;
     LinkedNode node;
 
-    int i;
+    float depthArray[NUM_BUF_ELEMENTS];
+
+    uint i;
     // Copy
     for (i = 0; i < NUM_BUF_ELEMENTS; i++)
     {
 		if (current == -1)
 		{
-			DoublyLinkedList[i + offset].depth = 1;
+			depthArray[i] = 1;
 			continue;
 		}
         numElems++;
         node = LinkedList[current];
-        DoublyLinkedList[i + offset].depth = node.depth + 1/256.0;
+        depthArray[i] = node.depth + 1/256.0;
 		current = node.next;
     }
 
-    DoublyLinkedNode temp;
+    float temp;
     // Sort
-    int j;
+    uint j;
     // selection sort
     for (i = 0; i < numElems; i++)
     {
-        int idx = i;
-        temp = DoublyLinkedList[idx + offset];
+        uint idx = i;
+        temp = depthArray[i];
         for (j = i + 1; j < numElems; j++)
         {
-            if (DoublyLinkedList[j + offset].depth < temp.depth)
+            if (depthArray[j] < temp)
             {
                 idx = j;
-                temp = DoublyLinkedList[j + offset];
+                temp = depthArray[j];
             }
         }
         if (idx != i)
         {
-			DoublyLinkedList[idx + offset] = DoublyLinkedList[i + offset];
-			DoublyLinkedList[i + offset] = temp;
+			depthArray[idx] = depthArray[i];
+			depthArray[i] = temp;
         }
     }
+
+	float sumXY = 0;
+	float sumX = 0;
+	float sumY = 0;
+	float sumXX = 0;
+    float3 f[4] = func.f;
+
+    [unroll(4)]
+	for (uint k = 0; k < 4; k++)
+	{
+		uint n = FittingBins[k];
+		for (i = 0; i < n; i++)
+		{
+			float x = (float)i / n;
+			float y = depthArray[i];
+			sumXY += x * y;
+			sumX += x;
+			sumY += y;
+			sumXX += x * x;
+		}
+        float fx = (n * sumXX - sumX * sumX) / (n * sumXY - sumX * sumY); //Reciprocal
+        float fy = sumY / n - fx * sumX / n;
+        float fz = depthArray[FittingBinsAcc[k]];
+		f[k] = float3(fx, fy, fz);
+	}
+    func.f = f;
+
+	FittingFuncList[id.y * Dimension + id.x] = func;
 }
 

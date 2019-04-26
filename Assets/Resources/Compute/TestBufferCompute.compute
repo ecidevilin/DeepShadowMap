@@ -2,13 +2,11 @@
 #pragma kernel KernelResetTestResult
 #pragma kernel KernelTestHeaderList
 #pragma kernel KernelTestLinkedList
-#pragma kernel KernelTestDoublyLinkedList
 #pragma kernel KernelTestFittingFuncList
 
 #include "../Include/DeepShadowMap.cginc"
 
 StructuredBuffer<int> HeaderList;
-StructuredBuffer<DoublyLinkedNode> DoublyLinkedList;
 StructuredBuffer<LinkedNode> LinkedList;
 StructuredBuffer<FittingFunc> FittingFuncList;
 RWTexture2D<float4> TestRt;
@@ -56,21 +54,6 @@ void KernelTestLinkedList(uint3 id : SV_DispatchThreadID)
         currentXEntry = LinkedList[currentXEntry.next];
     }
     TestRt[id.xy] = float4(currentXEntry.depth, 0, 0, 1);
-}
-
-[numthreads(8,8,1)]
-void KernelTestDoublyLinkedList(uint3 id : SV_DispatchThreadID)
-{
-	int offset = NUM_BUF_ELEMENTS * (id.y * Dimension + id.x);
-	int i = 0;
-	DoublyLinkedNode currentXEntry;
-	do
-	{
-		currentXEntry = DoublyLinkedList[offset++];
-		i++;
-	} while (i < TestIndex);
-	//TestRt[id.xy] = float4(currentXEntry.depth, currentXEntry.shading, currentXEntry.headOrTail, 1);
-	TestRt[id.xy] = float4(currentXEntry.depth, 1, 1, 1);
 }
 
 [numthreads(8, 8, 1)]

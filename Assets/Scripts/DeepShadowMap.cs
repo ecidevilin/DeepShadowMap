@@ -9,7 +9,6 @@ public class DeepShadowMap : MonoBehaviour
 
     private ComputeBuffer HeaderList;
     private ComputeBuffer LinkedList;
-    private ComputeBuffer DoublyLinkedList;
     private ComputeBuffer FittingFuncList;
 
     public Light DirectionalLight;
@@ -20,7 +19,6 @@ public class DeepShadowMap : MonoBehaviour
     public ComputeShader ResetBuffer;
     private int KernelResetHeaderList;
     private int KernelResetLinkedList;
-    private int KernelResetDoublyLinkedList;
     private int KernelResetFittingFuncList;
 
     private ComputeBuffer counterBuffer;
@@ -31,15 +29,11 @@ public class DeepShadowMap : MonoBehaviour
     public ComputeShader SortBuffer;
     private int KernelSortDeepShadowMap;
 
-    public ComputeShader FitBuffer;
-    private int KernelFitDeepShadowMap;
-
 #if UNITY_EDITOR
     public ComputeShader TestBuffer;
     private int KernelResetTestResult;
     private int KernelTestHeaderList;
     private int KernelTestLinkedList;
-    private int KernelTestDoublyLinkedList;
     private int KernelTestFittingFuncList;
     public RenderTexture TestRt;
     [Range(0, 49)]
@@ -48,7 +42,6 @@ public class DeepShadowMap : MonoBehaviour
     {
         KernelTestHeaderList,
         KernelTestLinkedList,
-        KernelTestDoublyLinkedList,
         KernelTestFittingFuncList,
     }
     public ETestKernel TestKernel;
@@ -71,7 +64,6 @@ public class DeepShadowMap : MonoBehaviour
 
         HeaderList = new ComputeBuffer(numElement, HeaderNode.StructSize());
         LinkedList = new ComputeBuffer(numElement, LinkedNode.StructSize(), ComputeBufferType.Counter);
-        DoublyLinkedList = new ComputeBuffer(numElement, DoublyLinkedNode.StructSize());
         LinkedList.SetCounterValue(0);
         FittingFuncList = new ComputeBuffer(dimension * dimension, sizeof(float) * 12);
 
@@ -81,13 +73,11 @@ public class DeepShadowMap : MonoBehaviour
 
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
         KernelResetLinkedList = ResetBuffer.FindKernel("KernelResetLinkedList");
-        KernelResetDoublyLinkedList = ResetBuffer.FindKernel("KernelResetDoublyLinkedList");
         KernelResetFittingFuncList = ResetBuffer.FindKernel("KernelResetFittingFuncList");
 
         ResetBuffer.SetInt("Dimension", dimension);
         ResetBuffer.SetBuffer(KernelResetHeaderList, "HeaderList", HeaderList);
         ResetBuffer.SetBuffer(KernelResetLinkedList, "LinkedList", LinkedList);
-        ResetBuffer.SetBuffer(KernelResetDoublyLinkedList, "DoublyLinkedList", DoublyLinkedList);
         ResetBuffer.SetBuffer(KernelResetFittingFuncList, "FittingFuncList", FittingFuncList);
 
         counterBuffer = new ComputeBuffer(3, sizeof(uint));
@@ -105,37 +95,27 @@ public class DeepShadowMap : MonoBehaviour
         SortBuffer.SetInt("Dimension", dimension);
         SortBuffer.SetBuffer(KernelSortDeepShadowMap, "HeaderList", HeaderList);
         SortBuffer.SetBuffer(KernelSortDeepShadowMap, "LinkedList", LinkedList);
-        SortBuffer.SetBuffer(KernelSortDeepShadowMap, "DoublyLinkedList", DoublyLinkedList);
-
-        KernelFitDeepShadowMap = FitBuffer.FindKernel("KernelFitDeepShadowMap");
-        FitBuffer.SetInt("Dimension", dimension);
-        FitBuffer.SetBuffer(KernelFitDeepShadowMap, "DoublyLinkedList", DoublyLinkedList);
-        FitBuffer.SetBuffer(KernelFitDeepShadowMap, "FittingFuncList", FittingFuncList);
+        SortBuffer.SetBuffer(KernelSortDeepShadowMap, "FittingFuncList", FittingFuncList);
 
 #if UNITY_EDITOR
         KernelResetTestResult = TestBuffer.FindKernel("KernelResetTestResult");
         KernelTestHeaderList = TestBuffer.FindKernel("KernelTestHeaderList");
         KernelTestLinkedList = TestBuffer.FindKernel("KernelTestLinkedList");
-        KernelTestDoublyLinkedList = TestBuffer.FindKernel("KernelTestDoublyLinkedList");
         KernelTestFittingFuncList = TestBuffer.FindKernel("KernelTestFittingFuncList");
         TestBuffer.SetInt("Dimension", dimension);
         TestBuffer.SetBuffer(KernelTestHeaderList, "HeaderList", HeaderList);
         TestBuffer.SetBuffer(KernelTestLinkedList, "HeaderList", HeaderList);
         TestBuffer.SetBuffer(KernelTestLinkedList, "LinkedList", LinkedList);
-        TestBuffer.SetBuffer(KernelTestDoublyLinkedList, "HeaderList", HeaderList);
-        TestBuffer.SetBuffer(KernelTestDoublyLinkedList, "DoublyLinkedList", DoublyLinkedList);
         TestBuffer.SetBuffer(KernelTestFittingFuncList, "FittingFuncList", FittingFuncList);
         TestRt.enableRandomWrite = true;
         TestBuffer.SetTexture(KernelResetTestResult, "TestRt", TestRt);
         TestBuffer.SetTexture(KernelTestHeaderList, "TestRt", TestRt);
         TestBuffer.SetTexture(KernelTestLinkedList, "TestRt", TestRt);
-        TestBuffer.SetTexture(KernelTestDoublyLinkedList, "TestRt", TestRt);
         TestBuffer.SetTexture(KernelTestFittingFuncList, "TestRt", TestRt);
 
 #endif
         Shader.SetGlobalBuffer("HeaderList", HeaderList);
         Shader.SetGlobalBuffer("FittingFuncList", FittingFuncList);
-        Shader.SetGlobalBuffer("DoublyLinkedList", DoublyLinkedList);
         Shader.SetGlobalInt("Dimension", dimension);
     }
 
@@ -194,8 +174,7 @@ public class DeepShadowMap : MonoBehaviour
 
 
         BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, dimension / 8, dimension / 8, 1);
-
-        BeforeForwardOpaque.DispatchCompute(FitBuffer, KernelFitDeepShadowMap, dimension / 8, dimension / 8, 1);
+        
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
 
         BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
@@ -206,32 +185,27 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetGlobalColor("_HairColor", HairColor);
 
 
-//#if UNITY_EDITOR
-//        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelResetTestResult, dimension / 8, dimension / 8, 1);
-//        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
-//        if (TestKernel == ETestKernel.KernelTestHeaderList)
-//        {
-//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestHeaderList, dimension / 8, dimension / 8, 1);
-//        }
-//        else if (TestKernel == ETestKernel.KernelTestLinkedList)
-//        {
-//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestLinkedList, dimension / 8, dimension / 8, 1);
+#if UNITY_EDITOR
+        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelResetTestResult, dimension / 8, dimension / 8, 1);
+        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
+        if (TestKernel == ETestKernel.KernelTestHeaderList)
+        {
+            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestHeaderList, dimension / 8, dimension / 8, 1);
+        }
+        else if (TestKernel == ETestKernel.KernelTestLinkedList)
+        {
+            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestLinkedList, dimension / 8, dimension / 8, 1);
 
-//        }
-//        else if (TestKernel == ETestKernel.KernelTestDoublyLinkedList)
-//        {
-//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestDoublyLinkedList, dimension / 8, dimension / 8, 1);
-//        }
-//        else if (TestKernel == ETestKernel.KernelTestFittingFuncList)
-//        {
-//            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestFittingFuncList, dimension / 8, dimension / 8, 1);
-//        }
-//#endif
+        }
+        else if (TestKernel == ETestKernel.KernelTestFittingFuncList)
+        {
+            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestFittingFuncList, dimension / 8, dimension / 8, 1);
+        }
+#endif
         AfterForwardOpaque.Clear();
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
         //AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
-        //AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetDoublyLinkedList, dimension / 8, dimension * elements / 8, 1);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetFittingFuncList, dimension / 8, dimension / 8, 1);
 
     }
@@ -240,7 +214,6 @@ public class DeepShadowMap : MonoBehaviour
     {
         LinkedList.Dispose();
         HeaderList.Dispose();
-        DoublyLinkedList.Dispose();
         FittingFuncList.Dispose();
         counterBuffer.Dispose();
     }

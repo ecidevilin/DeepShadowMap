@@ -10,11 +10,6 @@ struct LinkedNode
     float depth;
 };
 
-struct DoublyLinkedNode 
-{
-	float depth;
-};
-
 struct FittingFunc
 {
 	float3 f[4];

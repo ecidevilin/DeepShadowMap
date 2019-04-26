@@ -22,12 +22,3 @@ public struct LinkedNode
         return sizeof(float) + sizeof(int) * 2;
     }
 };
-
-public struct DoublyLinkedNode
-{
-    public float depth;
-    public static int StructSize()
-    {
-        return sizeof(float);
-    }
-};
