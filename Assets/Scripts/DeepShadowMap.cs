@@ -24,6 +24,7 @@ public class DeepShadowMap : MonoBehaviour
     private int KernelResetNeighborsList;
 
     private ComputeBuffer counterBuffer;
+    private ComputeBuffer boundBuffer;
 
     public ComputeShader HashBuffer;
     private int KernelHashDeepShadowMap;
@@ -100,6 +101,11 @@ public class DeepShadowMap : MonoBehaviour
         HashBuffer.SetInt("Dimension", dimension);
         HashBuffer.SetBuffer(KernelHashDeepShadowMap, "HeaderList", HeaderList);
         HashBuffer.SetBuffer(KernelHashDeepShadowMap, "LinkedList", LinkedList);
+        HashBuffer.SetBuffer(KernelHashDeepShadowMap, "counterBuffer", counterBuffer);
+
+        int[] BounderList = new int[4] { dimension - 1, 0, dimension - 1, 0 };
+        boundBuffer.SetData(BounderList);
+        HashBuffer.SetBuffer(KernelHashDeepShadowMap, "boundBuffer", boundBuffer);
 
         KernelSortDeepShadowMap = SortBuffer.FindKernel("KernelSortDeepShadowMap");
         SortBuffer.SetInt("Dimension", dimension);

@@ -4,12 +4,44 @@
 #include "../Include/DeepShadowMap.cginc"
 RWStructuredBuffer<HeaderNode> HeaderList;
 RWStructuredBuffer<LinkedNode> LinkedList;
+groupshared int minX;
+groupshared int maxX;
+groupshared int minY;
+groupshared int maxY;
+StructuredBuffer<int> counterBuffer;
+RWStructuredBuffer<int> boundBuffer;
 
-[numthreads(1,1,1)]
+[numthreads(64,1,1)]
 void KernelHashDeepShadowMap (uint3 id : SV_DispatchThreadID)
 {
-    int originalVal;
-    float3 pos = LinkedList[id.x].position;
-    InterlockedExchange(HeaderList[((uint)pos.y) * Dimension + (uint)pos.x].start, id.x, originalVal);
-    LinkedList[id.x].next = originalVal;
+    int count = counterBuffer[0];
+    if (count > id.x)
+    {
+        if (id.x % 64 == 0)
+        {
+            minX = Dimension - 1;
+            maxX = 0;
+            minY = Dimension - 1;
+            maxY = 0;
+        }
+        int originalVal;
+        float3 pos = LinkedList[id.x].position;
+        int posX = (int)pos.x;
+        int posY = (int)pos.y;
+        InterlockedExchange(HeaderList[posY * Dimension + posX].start, id.x, originalVal);
+        LinkedList[id.x].next = originalVal;
+        AllMemoryBarrierWithGroupSync();
+        InterlockedMin(minX, posX, originalVal);
+        InterlockedMax(maxX, posX, originalVal);
+        InterlockedMin(minY, posY, originalVal);
+        InterlockedMax(maxY, posY, originalVal);
+        AllMemoryBarrierWithGroupSync();
+        if (id.x % 64 == 0)
+        {
+            InterlockedMin(boundBuffer[0], minX, originalVal);
+            InterlockedMax(boundBuffer[1], maxX, originalVal);
+            InterlockedMin(boundBuffer[2], minY, originalVal);
+            InterlockedMax(boundBuffer[3], maxY, originalVal);
+        }
+    }
 }
