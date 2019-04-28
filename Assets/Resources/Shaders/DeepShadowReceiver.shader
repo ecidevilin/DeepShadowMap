@@ -55,14 +55,10 @@
 
 			float deepShadowmapShading(float3 posInLight)
 			{
-				float shadingSamples[2][2];
+				float shadingSamples[2][2] = {0,0,0,0};
 				float z = posInLight.z;
 #if FILTER_SIZE > 0
 				float oneOver = 1.0f / (FILTER_SIZE * 2 + 1);
-				shadingSamples[0][0] = 0;
-				shadingSamples[1][0] = 0;
-				shadingSamples[0][1] = 0;
-				shadingSamples[1][1] = 0;
 #endif
 				int currentY = posInLight.y - FILTER_SIZE;
 				[unroll(FILTER_SIZE * 2 + 2)]
@@ -86,9 +82,7 @@
 							float3 f3 = func.f[3];
 							uint fi = z < f1.z ? 0 : z < f2.z ? 1 : z < f3.z ? 2 : 3;
 							float3 f = func.f[fi];
-							uint n = FittingBins[fi];
-							uint o = FittingBinsAcc[fi];
-							float ii = (z - f.y) * f.x * n + o;
+							float ii = (z - f.y) * f.x * FittingBins[fi] + FittingBinsAcc[fi];
 							shading = pow(1.0 - _HairAlpha, ii + 1);
 						}
 #if FILTER_SIZE > 0
@@ -113,9 +107,7 @@
 				shadingSamples[0][1] *= oneOver;
 				shadingSamples[1][1] *= oneOver;
 #endif
-				float dx = frac(posInLight.x);
-				float dy = frac(posInLight.y);
-				float shading = bilinearInterpolation(dx, dy, shadingSamples[0][0], shadingSamples[1][0], shadingSamples[0][1], shadingSamples[1][1]);
+				float shading = bilinearInterpolation(frac(posInLight.x), frac(posInLight.y), shadingSamples[0][0], shadingSamples[1][0], shadingSamples[0][1], shadingSamples[1][1]);
 				shading = clamp(shading, 0.25, 1);
 				return shading;
 			}
@@ -133,13 +125,9 @@
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float3 tangent = normalize(i.tangent.xyz);
-                float3 posInWorld = i.worldPos;
-                float3 posInLight = i.lightPos;
-				posInLight += 1;
-				posInLight *= 0.5f;
+                float3 posInLight = i.lightPos * 0.5f + 0.5f;
 				posInLight.xy *= Dimension;
-                float3 finalColor = _HairColor * (CalculateKajiyaKay(tangent, posInWorld) + 0.09);
+                float3 finalColor = _HairColor * (CalculateKajiyaKay(normalize(i.tangent.xyz), i.worldPos) + 0.09);
 				float shading = deepShadowmapShading(posInLight);
                 return float4(finalColor * shading, 1.0f);
             }
