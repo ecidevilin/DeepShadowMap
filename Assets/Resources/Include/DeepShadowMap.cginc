@@ -6,7 +6,6 @@
 struct LinkedNode
 {
     int next;
-	uint index;
     float depth;
 };
 
