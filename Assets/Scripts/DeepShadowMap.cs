@@ -23,9 +23,6 @@ public class DeepShadowMap : MonoBehaviour
 
     private ComputeBuffer counterBuffer;
 
-    public ComputeShader HashBuffer;
-    private int KernelHashDeepShadowMap;
-
     public ComputeShader SortBuffer;
     private int KernelSortDeepShadowMap;
 
@@ -67,10 +64,6 @@ public class DeepShadowMap : MonoBehaviour
         LinkedList.SetCounterValue(0);
         FittingFuncList = new ComputeBuffer(dimension * dimension, sizeof(float) * 12);
 
-        ShadowMapMaterial.SetInt("Dimension", dimension);
-        ShadowMapMaterial.SetBuffer("HeaderList", HeaderList);
-        ShadowMapMaterial.SetBuffer("LinkedList", LinkedList);
-
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
         KernelResetLinkedList = ResetBuffer.FindKernel("KernelResetLinkedList");
         KernelResetFittingFuncList = ResetBuffer.FindKernel("KernelResetFittingFuncList");
@@ -85,11 +78,6 @@ public class DeepShadowMap : MonoBehaviour
         counterBuffer.SetData(ResetLinkedList);
 
         ResetBuffer.Dispatch(KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
-
-        KernelHashDeepShadowMap = HashBuffer.FindKernel("KernelHashDeepShadowMap");
-        HashBuffer.SetInt("Dimension", dimension);
-        HashBuffer.SetBuffer(KernelHashDeepShadowMap, "HeaderList", HeaderList);
-        HashBuffer.SetBuffer(KernelHashDeepShadowMap, "LinkedList", LinkedList);
 
         KernelSortDeepShadowMap = SortBuffer.FindKernel("KernelSortDeepShadowMap");
         SortBuffer.SetInt("Dimension", dimension);
@@ -115,6 +103,7 @@ public class DeepShadowMap : MonoBehaviour
 
 #endif
         Shader.SetGlobalBuffer("HeaderList", HeaderList);
+        Shader.SetGlobalBuffer("LinkedList", LinkedList);
         Shader.SetGlobalBuffer("FittingFuncList", FittingFuncList);
         Shader.SetGlobalInt("Dimension", dimension);
     }
@@ -170,7 +159,6 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.black);
         BeforeForwardOpaque.EndSample("ShadowMapMaterial");
         BeforeForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
-        BeforeForwardOpaque.DispatchCompute(HashBuffer, KernelHashDeepShadowMap, counterBuffer, 0);
 
 
         BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, dimension / 8, dimension / 8, 1);
