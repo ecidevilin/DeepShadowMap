@@ -52,19 +52,19 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     // selection sort
     for (i = 0; i < numElems; i++)
     {
-        uint idx = i;
+        uint tidx = i;
         temp = depthArray[i];
         for (j = i + 1; j < numElems; j++)
         {
             if (depthArray[j] < temp)
             {
-                idx = j;
+				tidx = j;
                 temp = depthArray[j];
             }
         }
-        if (idx != i)
+        if (tidx != i)
         {
-			depthArray[idx] = depthArray[i];
+			depthArray[tidx] = depthArray[i];
 			depthArray[i] = temp;
         }
     }
