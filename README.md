@@ -1,10 +1,10 @@
 # DeepShadowMap
 
 
-![Result](Pic/Hair0.png)
+![Front](Pic/Hair3.png)
 
 
-![Colored](Pic/Hair1.png)
+![45](Pic/Hair2.png)
 
 ## On iPhone XS
 
