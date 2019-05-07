@@ -6,7 +6,7 @@
 
 ![45](Pic/Hair2.png)
 
-![gif](Pic/GreenHairSmall.gif)
+![gif](Pic/greenHairSmall.gif)
 
 ## On iPhone XS
 
