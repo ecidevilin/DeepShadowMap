@@ -12,7 +12,7 @@
 
 ![ipxs](Pic/ipxs2.png)
 
-Only 13 FPS. (- -b)
+Only 30 FPS. (- -b)
 
 # Reference
 
