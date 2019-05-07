@@ -10,7 +10,7 @@
 
 ## On iPhone XS
 
-![ipxs](Pic/ipxs.png)
+![ipxs](Pic/ipxs2.png)
 
 Only 13 FPS. (- -b)
 
