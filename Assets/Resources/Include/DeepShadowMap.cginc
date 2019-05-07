@@ -14,7 +14,7 @@ struct FittingFunc
 	float3 f[4];
 };
 
-#define NUM_BUF_ELEMENTS 64
+#define NUM_BUF_ELEMENTS 32
 #define FILTER_SIZE 2
 
 uint Dimension;
