@@ -12,7 +12,7 @@
 
 ![ipxs](Pic/ipxs2.png)
 
-Only 30 FPS. (- -b)
+There are only 30 FPS on iphone XS. Mostly because the complex geometry takes a lot of gpu time on culling.
 
 # Reference
 
