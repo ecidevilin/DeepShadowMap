@@ -10,15 +10,19 @@ RWStructuredBuffer<FittingFunc> FittingFuncList;
 [numthreads(8,8,1)]
 void KernelResetHeaderList(uint3 id : SV_DispatchThreadID)
 {
-	HeaderList[id.y * Dimension + id.x] = -1;
+	HeaderList[id.y * Dimension + id.x] = 0;
 }
 
 
-[numthreads(1,1,1)]
+[numthreads(8,8,1)]
 void KernelResetLinkedList(uint3 id : SV_DispatchThreadID)
 {
-	int counter = LinkedList.DecrementCounter();
-	LinkedList[counter] = (LinkedNode)0;
+	for (int i = 0; i < NUM_BUF_ELEMENTS; i++)
+	{
+		LinkedList[NUM_BUF_ELEMENTS * (id.y * Dimension + id.x) + i].depth = 1;
+	}
+	//int counter = LinkedList.DecrementCounter();
+	//LinkedList[counter] = (LinkedNode)0;
 }
 
 [numthreads(8, 8, 1)]

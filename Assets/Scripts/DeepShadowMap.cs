@@ -21,8 +21,6 @@ public class DeepShadowMap : MonoBehaviour
     private int KernelResetLinkedList;
     private int KernelResetFittingFuncList;
 
-    private ComputeBuffer counterBuffer;
-
     public ComputeShader SortBuffer;
     private int KernelSortDeepShadowMap;
 
@@ -59,9 +57,8 @@ public class DeepShadowMap : MonoBehaviour
         camera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, BeforeForwardOpaque);
         camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, AfterForwardOpaque);
 
-        HeaderList = new ComputeBuffer(numElement, HeaderNode.StructSize());
-        LinkedList = new ComputeBuffer(numElement, LinkedNode.StructSize(), ComputeBufferType.Counter);
-        LinkedList.SetCounterValue(0);
+        HeaderList = new ComputeBuffer(dimension * dimension, HeaderNode.StructSize());
+        LinkedList = new ComputeBuffer(numElement, LinkedNode.StructSize());
         FittingFuncList = new ComputeBuffer(dimension * dimension, sizeof(float) * 12);
 
         KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
@@ -73,11 +70,7 @@ public class DeepShadowMap : MonoBehaviour
         ResetBuffer.SetBuffer(KernelResetLinkedList, "LinkedList", LinkedList);
         ResetBuffer.SetBuffer(KernelResetFittingFuncList, "FittingFuncList", FittingFuncList);
 
-        counterBuffer = new ComputeBuffer(3, sizeof(uint));
-        int[] ResetLinkedList = new int[3] { 0, 1, 1 };
-        counterBuffer.SetData(ResetLinkedList);
-
-        ResetBuffer.Dispatch(KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
+        ResetBuffer.Dispatch(KernelResetHeaderList, dimension / 8, dimension / 8, 1);
 
         KernelSortDeepShadowMap = SortBuffer.FindKernel("KernelSortDeepShadowMap");
         SortBuffer.SetInt("Dimension", dimension);
@@ -158,7 +151,6 @@ public class DeepShadowMap : MonoBehaviour
         }
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.black);
         BeforeForwardOpaque.EndSample("ShadowMapMaterial");
-        BeforeForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
 
 
         BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, dimension / 8, dimension / 8, 1);
@@ -191,10 +183,9 @@ public class DeepShadowMap : MonoBehaviour
         }
 #endif
         AfterForwardOpaque.Clear();
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension * elements / 8, 1);
-        //AfterForwardOpaque.CopyCounterValue(LinkedList, counterBuffer, 0);
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, counterBuffer, 0);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, dimension / 8, dimension / 8, 1);
         AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetFittingFuncList, dimension / 8, dimension / 8, 1);
+        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension / 8, 1);
 
     }
 
@@ -203,6 +194,5 @@ public class DeepShadowMap : MonoBehaviour
         LinkedList.Dispose();
         HeaderList.Dispose();
         FittingFuncList.Dispose();
-        counterBuffer.Dispose();
     }
 }

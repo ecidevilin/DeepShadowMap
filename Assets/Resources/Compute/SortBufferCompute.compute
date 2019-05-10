@@ -14,20 +14,17 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 		return;
 	}
 	int idx = id.y * Dimension + id.x;
-	int start = HeaderList[idx];
+	int num = min(HeaderList[idx], NUM_BUF_ELEMENTS);
 
-    int offset = idx * NUM_BUF_ELEMENTS;
 	FittingFunc func = (FittingFunc)0;
-	if (start == -1)
+	if (num == 0)
 	{
 		func.f[0] = float3(0, 1, 1);
-		FittingFuncList[(id.y * Dimension + id.x)] = func;
+		FittingFuncList[idx] = func;
         return;
     }
 
-    int current = start;
-    uint numElems = 0;
-    LinkedNode node;
+    int current = idx * NUM_BUF_ELEMENTS;;
 
     float depthArray[NUM_BUF_ELEMENTS];
 
@@ -35,26 +32,18 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     // Copy
     for (i = 0; i < NUM_BUF_ELEMENTS; i++)
     {
-		if (current == -1)
-		{
-			depthArray[i] = 1;
-			continue;
-		}
-        numElems++;
-        node = LinkedList[current];
-        depthArray[i] = node.depth + 1/256.0;
-		current = node.next;
+        depthArray[i] = LinkedList[current++].depth + 1/256.0;
     }
 
     float temp;
     // Sort
     uint j;
     // selection sort
-    for (i = 0; i < numElems; i++)
+    for (i = 0; i < num; i++)
     {
         uint tidx = i;
         temp = depthArray[i];
-        for (j = i + 1; j < numElems; j++)
+        for (j = i + 1; j < num; j++)
         {
             if (depthArray[j] < temp)
             {

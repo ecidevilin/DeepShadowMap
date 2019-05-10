@@ -14,11 +14,9 @@ public struct HeaderNode
 
 public struct LinkedNode
 {
-    public int next;
-    public int index;
     public float depth;
     public static int StructSize()
     {
-        return sizeof(float) + sizeof(int) * 2;
+        return sizeof(float);
     }
 };

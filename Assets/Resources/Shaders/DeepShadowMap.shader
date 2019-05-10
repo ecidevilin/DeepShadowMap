@@ -45,13 +45,19 @@
             {
 				float3 posInLight = i.lightPos * 0.5f + 0.5f;
 				posInLight.xy *= Dimension;
-                int counter = LinkedList.IncrementCounter();
-				LinkedList[counter].depth = posInLight.z;
+    //            int counter = LinkedList.IncrementCounter();
+				//LinkedList[counter].depth = posInLight.z;
+				//int originalVal;
+				//InterlockedExchange(HeaderList[((uint)posInLight.y) * Dimension + (uint)posInLight.x], counter, originalVal);
+				//LinkedList[counter].next = originalVal;
+				uint idx = ((uint)posInLight.y) * Dimension + (uint)posInLight.x;
+				uint offset = idx * NUM_BUF_ELEMENTS;
 				int originalVal;
-				InterlockedExchange(HeaderList[((uint)posInLight.y) * Dimension + (uint)posInLight.x], counter, originalVal);
-				LinkedList[counter].next = originalVal;
+				InterlockedAdd(HeaderList[idx], 1, originalVal);
+				originalVal = min(NUM_BUF_ELEMENTS - 1, originalVal);
+				LinkedList[offset + originalVal].depth = posInLight.z;
 
-                return fixed4(LinkedList[counter].depth, 0, 0, 1);
+                return fixed4(LinkedList[offset + originalVal].depth, 0, 0, 1);
 
             }
             ENDCG
