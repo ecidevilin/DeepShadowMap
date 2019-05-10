@@ -88,7 +88,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 			sumY += y;
 			sumXX += x * x;
 		}
-        float fx = (n * sumXX - sumX * sumX) / (n * sumXY - sumX * sumY); //Reciprocal
+        float fx = (n * sumXX - sumX * sumX) / max(0.01,(n * sumXY - sumX * sumY)); //Reciprocal
         float fy = sumY / n - sumX / fx / n;
         float fz = depthArray[FittingBinsAcc[k]];
 		f[k] = float3(fx, fy, fz);
