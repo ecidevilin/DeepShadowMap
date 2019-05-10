@@ -3,7 +3,7 @@
 float3 CameraPos;
 float3 LightDir;
 float _HairAlpha;
-StructuredBuffer<FittingFunc> FittingFuncList;
+StructuredBuffer<FittingFunc> RegressionBuffer;
 
 float CalculateKajiyaKay(float3 tangent, float3 posInWorld)
 {
@@ -39,7 +39,7 @@ float deepShadowmapShading(float3 posInLight)
 		[unroll(FILTER_SIZE * 2 + 2)]
 		for (uint x = 0; x < FILTER_SIZE * 2 + 2; x++)
 		{
-			FittingFunc func = FittingFuncList[idx++];
+			FittingFunc func = RegressionBuffer[idx++];
 			float3 f0 = func.f[0];
 			float shading = 1;
 			if (z >= f0.z)

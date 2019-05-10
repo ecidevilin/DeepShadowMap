@@ -7,37 +7,37 @@ public class DeepShadowMap : MonoBehaviour
     private CommandBuffer BeforeForwardOpaque;
     private CommandBuffer AfterForwardOpaque;
 
-    private ComputeBuffer HeaderList;
-    private ComputeBuffer LinkedList;
-    private ComputeBuffer FittingFuncList;
+    private ComputeBuffer NumberBuffer;
+    private ComputeBuffer DepthBuffer;
+    private ComputeBuffer RegressionBuffer;
 
     public Light DirectionalLight;
     public Material ShadowMapMaterial;
     [Range(0, 1)]
     public float HairAlpha = 0.7f;
 
-    public ComputeShader ResetBuffer;
-    private int KernelResetHeaderList;
-    private int KernelResetLinkedList;
-    private int KernelResetFittingFuncList;
+    public ComputeShader ResetCompute;
+    private int KernelResetNumberBuffer;
+    private int KernelResetDepthBuffer;
+    private int KernelResetRegressionBuffer;
 
-    public ComputeShader SortBuffer;
-    private int KernelSortDeepShadowMap;
+    public ComputeShader SortCompute;
+    private int KernelSortDepth;
 
 #if UNITY_EDITOR
-    public ComputeShader TestBuffer;
+    public ComputeShader TestCompute;
     private int KernelResetTestResult;
-    private int KernelTestHeaderList;
-    private int KernelTestLinkedList;
-    private int KernelTestFittingFuncList;
-    public RenderTexture TestRt;
+    private int KernelTestNumberBuffer;
+    private int KernelTestDepthBuffer;
+    private int KernelTestRegressionBuffer;
+    public RenderTexture TestRenderTexture;
     [Range(0, 49)]
     public int TestIndex;
     public enum ETestKernel
     {
-        KernelTestHeaderList,
-        KernelTestLinkedList,
-        KernelTestFittingFuncList,
+        KernelTestNumberBuffer,
+        KernelTestDepthBuffer,
+        KernelTestRegressionBuffer,
     }
     public ETestKernel TestKernel;
 #endif
@@ -57,47 +57,46 @@ public class DeepShadowMap : MonoBehaviour
         camera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, BeforeForwardOpaque);
         camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, AfterForwardOpaque);
 
-        HeaderList = new ComputeBuffer(dimension * dimension, HeaderNode.StructSize());
-        LinkedList = new ComputeBuffer(numElement, LinkedNode.StructSize());
-        FittingFuncList = new ComputeBuffer(dimension * dimension, sizeof(float) * 12);
+        NumberBuffer = new ComputeBuffer(dimension * dimension, sizeof(uint));
+        DepthBuffer = new ComputeBuffer(numElement, sizeof(float));
+        RegressionBuffer = new ComputeBuffer(dimension * dimension, sizeof(float) * 12);
 
-        KernelResetHeaderList = ResetBuffer.FindKernel("KernelResetHeaderList");
-        KernelResetLinkedList = ResetBuffer.FindKernel("KernelResetLinkedList");
-        KernelResetFittingFuncList = ResetBuffer.FindKernel("KernelResetFittingFuncList");
+        KernelResetNumberBuffer = ResetCompute.FindKernel("KernelResetNumberBuffer");
+        KernelResetDepthBuffer = ResetCompute.FindKernel("KernelResetDepthBuffer");
+        KernelResetRegressionBuffer = ResetCompute.FindKernel("KernelResetRegressionBuffer");
 
-        ResetBuffer.SetInt("Dimension", dimension);
-        ResetBuffer.SetBuffer(KernelResetHeaderList, "HeaderList", HeaderList);
-        ResetBuffer.SetBuffer(KernelResetLinkedList, "LinkedList", LinkedList);
-        ResetBuffer.SetBuffer(KernelResetFittingFuncList, "FittingFuncList", FittingFuncList);
+        ResetCompute.SetInt("Dimension", dimension);
+        ResetCompute.SetBuffer(KernelResetNumberBuffer, "NumberBuffer", NumberBuffer);
+        ResetCompute.SetBuffer(KernelResetDepthBuffer, "DepthBuffer", DepthBuffer);
+        ResetCompute.SetBuffer(KernelResetRegressionBuffer, "RegressionBuffer", RegressionBuffer);
 
-        ResetBuffer.Dispatch(KernelResetHeaderList, dimension / 8, dimension / 8, 1);
+        ResetCompute.Dispatch(KernelResetNumberBuffer, dimension / 8, dimension / 8, 1);
 
-        KernelSortDeepShadowMap = SortBuffer.FindKernel("KernelSortDeepShadowMap");
-        SortBuffer.SetInt("Dimension", dimension);
-        SortBuffer.SetBuffer(KernelSortDeepShadowMap, "HeaderList", HeaderList);
-        SortBuffer.SetBuffer(KernelSortDeepShadowMap, "LinkedList", LinkedList);
-        SortBuffer.SetBuffer(KernelSortDeepShadowMap, "FittingFuncList", FittingFuncList);
+        KernelSortDepth = SortCompute.FindKernel("KernelSortDepth");
+        SortCompute.SetInt("Dimension", dimension);
+        SortCompute.SetBuffer(KernelSortDepth, "NumberBuffer", NumberBuffer);
+        SortCompute.SetBuffer(KernelSortDepth, "DepthBuffer", DepthBuffer);
+        SortCompute.SetBuffer(KernelSortDepth, "RegressionBuffer", RegressionBuffer);
 
 #if UNITY_EDITOR
-        KernelResetTestResult = TestBuffer.FindKernel("KernelResetTestResult");
-        KernelTestHeaderList = TestBuffer.FindKernel("KernelTestHeaderList");
-        KernelTestLinkedList = TestBuffer.FindKernel("KernelTestLinkedList");
-        KernelTestFittingFuncList = TestBuffer.FindKernel("KernelTestFittingFuncList");
-        TestBuffer.SetInt("Dimension", dimension);
-        TestBuffer.SetBuffer(KernelTestHeaderList, "HeaderList", HeaderList);
-        TestBuffer.SetBuffer(KernelTestLinkedList, "HeaderList", HeaderList);
-        TestBuffer.SetBuffer(KernelTestLinkedList, "LinkedList", LinkedList);
-        TestBuffer.SetBuffer(KernelTestFittingFuncList, "FittingFuncList", FittingFuncList);
-        TestRt.enableRandomWrite = true;
-        TestBuffer.SetTexture(KernelResetTestResult, "TestRt", TestRt);
-        TestBuffer.SetTexture(KernelTestHeaderList, "TestRt", TestRt);
-        TestBuffer.SetTexture(KernelTestLinkedList, "TestRt", TestRt);
-        TestBuffer.SetTexture(KernelTestFittingFuncList, "TestRt", TestRt);
+        KernelResetTestResult = TestCompute.FindKernel("KernelResetTestResult");
+        KernelTestNumberBuffer = TestCompute.FindKernel("KernelTestNumberBuffer");
+        KernelTestDepthBuffer = TestCompute.FindKernel("KernelTestDepthBuffer");
+        KernelTestRegressionBuffer = TestCompute.FindKernel("KernelTestRegressionBuffer");
+        TestCompute.SetInt("Dimension", dimension);
+        TestCompute.SetBuffer(KernelTestNumberBuffer, "NumberBuffer", NumberBuffer);
+        TestCompute.SetBuffer(KernelTestDepthBuffer, "DepthBuffer", DepthBuffer);
+        TestCompute.SetBuffer(KernelTestRegressionBuffer, "RegressionBuffer", RegressionBuffer);
+        TestRenderTexture.enableRandomWrite = true;
+        TestCompute.SetTexture(KernelResetTestResult, "TestRenderTexture", TestRenderTexture);
+        TestCompute.SetTexture(KernelTestNumberBuffer, "TestRenderTexture", TestRenderTexture);
+        TestCompute.SetTexture(KernelTestDepthBuffer, "TestRenderTexture", TestRenderTexture);
+        TestCompute.SetTexture(KernelTestRegressionBuffer, "TestRenderTexture", TestRenderTexture);
 
 #endif
-        Shader.SetGlobalBuffer("HeaderList", HeaderList);
-        Shader.SetGlobalBuffer("LinkedList", LinkedList);
-        Shader.SetGlobalBuffer("FittingFuncList", FittingFuncList);
+        Shader.SetGlobalBuffer("NumberBuffer", NumberBuffer);
+        Shader.SetGlobalBuffer("DepthBuffer", DepthBuffer);
+        Shader.SetGlobalBuffer("RegressionBuffer", RegressionBuffer);
         Shader.SetGlobalInt("Dimension", dimension);
     }
 
@@ -153,7 +152,7 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.EndSample("ShadowMapMaterial");
 
 
-        BeforeForwardOpaque.DispatchCompute(SortBuffer, KernelSortDeepShadowMap, dimension / 8, dimension / 8, 1);
+        BeforeForwardOpaque.DispatchCompute(SortCompute, KernelSortDepth, dimension / 8, dimension / 8, 1);
         
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
 
@@ -166,33 +165,33 @@ public class DeepShadowMap : MonoBehaviour
 
 
 #if UNITY_EDITOR
-        BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelResetTestResult, dimension / 8, dimension / 8, 1);
-        BeforeForwardOpaque.SetComputeIntParam(TestBuffer, "TestIndex", TestIndex);
-        if (TestKernel == ETestKernel.KernelTestHeaderList)
+        BeforeForwardOpaque.DispatchCompute(TestCompute, KernelResetTestResult, dimension / 8, dimension / 8, 1);
+        BeforeForwardOpaque.SetComputeIntParam(TestCompute, "TestIndex", TestIndex);
+        if (TestKernel == ETestKernel.KernelTestNumberBuffer)
         {
-            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestHeaderList, dimension / 8, dimension / 8, 1);
+            BeforeForwardOpaque.DispatchCompute(TestCompute, KernelTestNumberBuffer, dimension / 8, dimension / 8, 1);
         }
-        else if (TestKernel == ETestKernel.KernelTestLinkedList)
+        else if (TestKernel == ETestKernel.KernelTestDepthBuffer)
         {
-            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestLinkedList, dimension / 8, dimension / 8, 1);
+            BeforeForwardOpaque.DispatchCompute(TestCompute, KernelTestDepthBuffer, dimension / 8, dimension / 8, 1);
 
         }
-        else if (TestKernel == ETestKernel.KernelTestFittingFuncList)
+        else if (TestKernel == ETestKernel.KernelTestRegressionBuffer)
         {
-            BeforeForwardOpaque.DispatchCompute(TestBuffer, KernelTestFittingFuncList, dimension / 8, dimension / 8, 1);
+            BeforeForwardOpaque.DispatchCompute(TestCompute, KernelTestRegressionBuffer, dimension / 8, dimension / 8, 1);
         }
 #endif
         AfterForwardOpaque.Clear();
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetLinkedList, dimension / 8, dimension / 8, 1);
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetFittingFuncList, dimension / 8, dimension / 8, 1);
-        AfterForwardOpaque.DispatchCompute(ResetBuffer, KernelResetHeaderList, dimension / 8, dimension / 8, 1);
+        AfterForwardOpaque.DispatchCompute(ResetCompute, KernelResetDepthBuffer, dimension / 8, dimension / 8, 1);
+        AfterForwardOpaque.DispatchCompute(ResetCompute, KernelResetRegressionBuffer, dimension / 8, dimension / 8, 1);
+        AfterForwardOpaque.DispatchCompute(ResetCompute, KernelResetNumberBuffer, dimension / 8, dimension / 8, 1);
 
     }
 
     private void OnDestroy()
     {
-        LinkedList.Dispose();
-        HeaderList.Dispose();
-        FittingFuncList.Dispose();
+        DepthBuffer.Dispose();
+        NumberBuffer.Dispose();
+        RegressionBuffer.Dispose();
     }
 }

@@ -1,48 +1,48 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel KernelResetTestResult
-#pragma kernel KernelTestHeaderList
-#pragma kernel KernelTestLinkedList
-#pragma kernel KernelTestFittingFuncList
+#pragma kernel KernelTestNumberBuffer
+#pragma kernel KernelTestDepthBuffer
+#pragma kernel KernelTestRegressionBuffer
 
 #include "../Include/DeepShadowMap.cginc"
 
-StructuredBuffer<int> HeaderList;
-StructuredBuffer<LinkedNode> LinkedList;
-StructuredBuffer<FittingFunc> FittingFuncList;
-RWTexture2D<float4> TestRt;
+StructuredBuffer<int> NumberBuffer;
+StructuredBuffer<float> DepthBuffer;
+StructuredBuffer<FittingFunc> RegressionBuffer;
+RWTexture2D<float4> TestRenderTexture;
 int TestIndex;
 
 [numthreads(8,8,1)]
 void KernelResetTestResult(uint3 id : SV_DispatchThreadID)
 {
-    TestRt[id.xy] = float4(0,0,0,1);
+	TestRenderTexture[id.xy] = float4(0,0,0,1);
 }
 
 [numthreads(8,8,1)]
-void KernelTestHeaderList(uint3 id : SV_DispatchThreadID)
+void KernelTestNumberBuffer(uint3 id : SV_DispatchThreadID)
 {
-    int start = HeaderList[id.y * Dimension + id.x];
-    if (start == -1)
+    int start = NumberBuffer[id.y * Dimension + id.x];
+    if (start <= TestIndex)
     {
-        TestRt[id.xy] = float4(0,0,0,1);
+		TestRenderTexture[id.xy] = float4(0,0,0,1);
     }
     else
     {
-        TestRt[id.xy] = float4(1,0,0,1);
+		TestRenderTexture[id.xy] = float4(1,0,0,1);
     }
 }
 
 [numthreads(8,8,1)]
-void KernelTestLinkedList(uint3 id : SV_DispatchThreadID)
+void KernelTestDepthBuffer(uint3 id : SV_DispatchThreadID)
 {
-    LinkedNode currentXEntry = LinkedList[(id.y * Dimension + id.x) * NUM_BUF_ELEMENTS + TestIndex];
-    TestRt[id.xy] = float4(currentXEntry.depth, 0, 0, 1);
+    float depth = DepthBuffer[(id.y * Dimension + id.x) * NUM_BUF_ELEMENTS + TestIndex];
+	TestRenderTexture[id.xy] = float4(depth, 0, 0, 1);
 }
 
 [numthreads(8, 8, 1)]
-void KernelTestFittingFuncList(uint3 id : SV_DispatchThreadID)
+void KernelTestRegressionBuffer(uint3 id : SV_DispatchThreadID)
 {
-	FittingFunc func = FittingFuncList[id.y * Dimension + id.x];
+	FittingFunc func = RegressionBuffer[id.y * Dimension + id.x];
 	float3 f = func.f[(uint)TestIndex % 4];
-	TestRt[id.xy] = float4((f.xy), abs(f.y)-f.y, 1);
+	TestRenderTexture[id.xy] = float4((f.xy), abs(f.y)-f.y, 1);
 }

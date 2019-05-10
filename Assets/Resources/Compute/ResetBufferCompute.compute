@@ -1,32 +1,30 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel KernelResetHeaderList
-#pragma kernel KernelResetLinkedList
-#pragma kernel KernelResetFittingFuncList
+#pragma kernel KernelResetNumberBuffer
+#pragma kernel KernelResetDepthBuffer
+#pragma kernel KernelResetRegressionBuffer
 #include "../Include/DeepShadowMap.cginc"
-RWStructuredBuffer<int> HeaderList;
-RWStructuredBuffer<LinkedNode> LinkedList;
-RWStructuredBuffer<FittingFunc> FittingFuncList;
+RWStructuredBuffer<int> NumberBuffer;
+RWStructuredBuffer<float> DepthBuffer;
+RWStructuredBuffer<FittingFunc> RegressionBuffer;
 
 [numthreads(8,8,1)]
-void KernelResetHeaderList(uint3 id : SV_DispatchThreadID)
+void KernelResetNumberBuffer(uint3 id : SV_DispatchThreadID)
 {
-	HeaderList[id.y * Dimension + id.x] = 0;
+	NumberBuffer[id.y * Dimension + id.x] = 0;
 }
 
 
 [numthreads(8,8,1)]
-void KernelResetLinkedList(uint3 id : SV_DispatchThreadID)
+void KernelResetDepthBuffer(uint3 id : SV_DispatchThreadID)
 {
 	for (int i = 0; i < NUM_BUF_ELEMENTS; i++)
 	{
-		LinkedList[NUM_BUF_ELEMENTS * (id.y * Dimension + id.x) + i].depth = 1;
+		DepthBuffer[NUM_BUF_ELEMENTS * (id.y * Dimension + id.x) + i] = 1;
 	}
-	//int counter = LinkedList.DecrementCounter();
-	//LinkedList[counter] = (LinkedNode)0;
 }
 
 [numthreads(8, 8, 1)]
-void KernelResetFittingFuncList(uint3 id :SV_DispatchThreadID)
+void KernelResetRegressionBuffer(uint3 id :SV_DispatchThreadID)
 {
-	FittingFuncList[id.y * Dimension + id.x] = (FittingFunc)0;
+	RegressionBuffer[id.y * Dimension + id.x] = (FittingFunc)0;
 }

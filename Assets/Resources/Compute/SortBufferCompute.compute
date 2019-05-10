@@ -1,30 +1,30 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel KernelSortDeepShadowMap
+#pragma kernel KernelSortDepth
 
 #include "../Include/DeepShadowMap.cginc"
-StructuredBuffer<int> HeaderList;
-StructuredBuffer<LinkedNode> LinkedList;
-RWStructuredBuffer<FittingFunc> FittingFuncList;
+StructuredBuffer<int> NumberBuffer;
+StructuredBuffer<float> DepthBuffer;
+RWStructuredBuffer<FittingFunc> RegressionBuffer;
 
 [numthreads(8,8,1)]
-void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
+void KernelSortDepth(uint3 id : SV_DispatchThreadID)
 {
 	if (id.y > Dimension - 1 || id.x > Dimension - 1)
 	{
 		return;
 	}
 	int idx = id.y * Dimension + id.x;
-	int num = min(HeaderList[idx], NUM_BUF_ELEMENTS);
+	int num = min(NumberBuffer[idx], NUM_BUF_ELEMENTS);
 
 	FittingFunc func = (FittingFunc)0;
 	if (num == 0)
 	{
 		func.f[0] = float3(0, 1, 1);
-		FittingFuncList[idx] = func;
+		RegressionBuffer[idx] = func;
         return;
     }
 
-    int current = idx * NUM_BUF_ELEMENTS;;
+    int offset = idx * NUM_BUF_ELEMENTS;;
 
     float depthArray[NUM_BUF_ELEMENTS];
 
@@ -32,7 +32,7 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
     // Copy
     for (i = 0; i < NUM_BUF_ELEMENTS; i++)
     {
-        depthArray[i] = LinkedList[current++].depth + 1/256.0;
+        depthArray[i] = DepthBuffer[offset+i] + 1/256.0;
     }
 
     float temp;
@@ -84,6 +84,6 @@ void KernelSortDeepShadowMap(uint3 id : SV_DispatchThreadID)
 	}
     func.f = f;
 
-	FittingFuncList[id.y * Dimension + id.x] = func;
+	RegressionBuffer[idx] = func;
 }
 

@@ -1,13 +1,4 @@
-﻿struct HeaderNode
-{
-	int start;
-};
-
-struct LinkedNode
-{
-    float depth;
-};
-
+﻿
 struct FittingFunc
 {
 	float3 f[4];

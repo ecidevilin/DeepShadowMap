@@ -18,8 +18,8 @@
 
             #include "UnityCG.cginc"
             #include "../Include/DeepShadowMap.cginc"
-			RWStructuredBuffer<int> HeaderList;
-			RWStructuredBuffer<LinkedNode> LinkedList;
+			RWStructuredBuffer<uint> NumberBuffer;
+			RWStructuredBuffer<float> DepthBuffer;
 			float4x4 _LightVP;
 
             struct appdata
@@ -45,19 +45,14 @@
             {
 				float3 posInLight = i.lightPos * 0.5f + 0.5f;
 				posInLight.xy *= Dimension;
-    //            int counter = LinkedList.IncrementCounter();
-				//LinkedList[counter].depth = posInLight.z;
-				//int originalVal;
-				//InterlockedExchange(HeaderList[((uint)posInLight.y) * Dimension + (uint)posInLight.x], counter, originalVal);
-				//LinkedList[counter].next = originalVal;
 				uint idx = ((uint)posInLight.y) * Dimension + (uint)posInLight.x;
 				uint offset = idx * NUM_BUF_ELEMENTS;
-				int originalVal;
-				InterlockedAdd(HeaderList[idx], 1, originalVal);
+				uint originalVal;
+				InterlockedAdd(NumberBuffer[idx], 1, originalVal);
 				originalVal = min(NUM_BUF_ELEMENTS - 1, originalVal);
-				LinkedList[offset + originalVal].depth = posInLight.z;
+				DepthBuffer[offset + originalVal] = posInLight.z;
 
-                return fixed4(LinkedList[offset + originalVal].depth, 0, 0, 1);
+                return fixed4(posInLight.z, 0, 0, 1);
 
             }
             ENDCG
