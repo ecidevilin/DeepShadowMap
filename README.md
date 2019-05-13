@@ -1,10 +1,10 @@
 # DeepShadowMap
 
+![45](Pic/Hair2.png)
 
 ![Front](Pic/Hair3.png)
 
-
-![45](Pic/Hair2.png)
+![Back](Pic/Hair4.png)
 
 ![gif](Pic/greenHairSmall.gif)
 

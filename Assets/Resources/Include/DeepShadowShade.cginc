@@ -52,6 +52,7 @@ float deepShadowmapShading(float3 posInLight)
 				uint n = FittingBins[fi];
 				uint o = FittingBinsAcc[fi];
 				float ii = (z - f.y) * f.x * n + o;
+				ii = clamp(ii, 0, NUM_BUF_ELEMENTS);
 				shading = pow(1.0 - _HairAlpha, ii + 1);
 			}
 #if FILTER_SIZE > 0
@@ -69,6 +70,6 @@ float deepShadowmapShading(float3 posInLight)
 	shadingSamples *= oneOver;
 #endif
 	float shading = bilinearInterpolation(frac(posInLight.x), frac(posInLight.y), shadingSamples);
-	shading = clamp(shading, 0.25, 1);
+	shading = clamp(shading, 0.1, 1);
 	return shading;
 }
