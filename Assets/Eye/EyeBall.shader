@@ -240,7 +240,7 @@
 
 			//Reflections			OK
 			//Wetness				OK
-			//Reflection Occlusion	OK(No Parallax)
+			//Reflection Occlusion	OK(No Fixed)
 			//View Refraction		Parallax
 			//Light Refraction
 			//Ambient Occlusion		OK(Not Fixed)

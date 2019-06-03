@@ -52,7 +52,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EyeWetNormal:
-        m_Texture: {fileID: 2800000, guid: 0a0b8c01c7b6e674ebd9e6417eec49e2, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2fba46d30634b3c4f90936e3e9da59dd, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _IrisColor:
@@ -96,7 +96,7 @@ Material:
     - _DepthScale: 1.2
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _FlattenNormal: 0.95
+    - _FlattenNormal: 0.9
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -113,7 +113,7 @@ Material:
     - _LimbusUVWidthShading: 0.045
     - _Metallic: 0
     - _Mode: 0
-    - _NormalUVScale: 1
+    - _NormalUVScale: 5
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _PupilScale: 0.65
