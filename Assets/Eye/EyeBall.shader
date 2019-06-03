@@ -237,6 +237,17 @@
                 return lerp(normalize(c) * 0.5, float2(0, 0), saturate((1 - length(c) * 2) * _PupilScale)) + 0.5;
             }
 
+
+			//Reflections			OK
+			//Wetness				OK
+			//Reflection Occlusion	OK(No Parallax)
+			//View Refraction		Parallax
+			//Light Refraction
+			//Ambient Occlusion		OK(Not Fixed)
+			//Iris Bump Mapping		
+			//Limbus Rendering		OK
+			//Eye Redness Rendering	OK
+
             fixed4 fragEye (v2f i) : SV_Target
             {
                 float4 tn = tex2D(_EyeNormals, i.uv);

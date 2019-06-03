@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: EyeBall
+  m_Name: EyeBallWet
   m_Shader: {fileID: 4800000, guid: 0e7234220263d7d408d0cbe993062444, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
@@ -96,7 +96,7 @@ Material:
     - _DepthScale: 1.2
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _FlattenNormal: 0.95
+    - _FlattenNormal: 0.9
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -107,13 +107,13 @@ Material:
     - _IrisSmoothness: 1
     - _IrisSpecular: 1
     - _IrisUVRadius: 0.145
-    - _LimbusDarkScale: 2.4
-    - _LimbusPow: 25
+    - _LimbusDarkScale: 2
+    - _LimbusPow: 40
     - _LimbusUVWidthColor: 0.035
     - _LimbusUVWidthShading: 0.045
     - _Metallic: 0
     - _Mode: 0
-    - _NormalUVScale: 1
+    - _NormalUVScale: 0.4
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _PupilScale: 0.65
@@ -131,7 +131,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _Veins: 1
+    - _Veins: 0.9
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
