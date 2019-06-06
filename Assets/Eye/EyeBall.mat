@@ -72,7 +72,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionTex:
-        m_Texture: {fileID: 2800000, guid: 2c0502fe2d880c3479205efd67758a90, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
@@ -92,8 +92,8 @@ Material:
     - _AOScale: 2
     - _BumpScale: 1
     - _Cutoff: 0.5
-    - _DepthPlaneOffset: 0.7
-    - _DepthScale: 1.2
+    - _DepthPlaneOffset: 0.8
+    - _DepthScale: 1.976
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _FlattenNormal: 0.9
@@ -109,7 +109,7 @@ Material:
     - _IrisUVRadius: 0.145
     - _LimbusDarkScale: 2.4
     - _LimbusPow: 25
-    - _LimbusUVWidthColor: 0.035
+    - _LimbusUVWidthColor: 0.05
     - _LimbusUVWidthShading: 0.045
     - _Metallic: 0
     - _Mode: 0
@@ -118,7 +118,7 @@ Material:
     - _Parallax: 0.02
     - _PupilScale: 0.65
     - _Refraction: 1
-    - _RoRI: 0.7485
+    - _RoRI: 0.996
     - _SOScale: 1
     - _ScaleByCenter: 1
     - _ScleraRoughness: 0

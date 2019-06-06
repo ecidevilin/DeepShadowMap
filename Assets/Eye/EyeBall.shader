@@ -30,6 +30,8 @@
         _ScleraSpecular ("Sclera Specular", float) = 0.3
         _ScleraInnerColor ("Sclera Inner Color", Color) = (1,1,1,0)
         _ScleraOuterColor ("Sclera Outer Color", Color) = (1,1,1,0)
+		_ShadowRadius("Shadow Radius", float) = 0.65
+		_ShadowHardness("Shadow Hardness", float) = 0.1
         _Veins ("Veins", Range(0, 10)) = 1
 
         [Header(Limbus)]
@@ -45,10 +47,6 @@
         [NoScaleOffset]
         _EyeWetNormal ("Eye Wet Normal", 2D) = "bump" {}
         _FlattenNormal ("Flattern Normal", float) = 0.95
-
-        [Header(Shadow)]
-        _ShadowRadius ("Shadow Radius", float) = 0.65
-        _ShadowHardness ("Shadow Hardness", float) = 0.1
 
         [Header(Environment)]
 		[NoScaleOffset]
@@ -288,9 +286,11 @@
                 limbus = 1 - pow(saturate(limbus), _LimbusPow);
 				col *= limbus;
 
-				float sphere = 1 - pow(length(i.uv.xy - 0.5) / _ShadowRadius, 1-_ShadowHardness);
-                float3 mask = lerp(lerp(_ScleraOuterColor, 1, sphere), lerp(1, _ScleraInnerColor, sphere), sphere);
-                float3 sclera = tex2D(_ScleraColor, i.uv).rgb;
+				float2 sphere = 1 - pow(length(i.uv.xy - 0.5) / _ShadowRadius, 1-_ShadowHardness);
+				sphere.y = 1 - sphere.x;
+				float3 mask = sphere.xyx * sphere.xyy;
+				mask = _ScleraInnerColor * mask.x + _ScleraOuterColor * mask.y + 2 * mask.z;
+				float3 sclera = tex2D(_ScleraColor, i.uv).rgb;
 				sclera = lerp(1, sclera, _Veins) * _ScleraBrightness * mask;
                 
 				col = lerp(sclera, col, blend);
