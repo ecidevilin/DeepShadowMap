@@ -5,6 +5,7 @@
 StructuredBuffer<int> NumberBuffer;
 StructuredBuffer<float> DepthBuffer;
 RWStructuredBuffer<FittingFunc> RegressionBuffer;
+#define SORTING_MULTIPLE 4
 
 [numthreads(8,8,1)]
 void KernelSortDepth(uint3 id : SV_DispatchThreadID)
@@ -26,13 +27,13 @@ void KernelSortDepth(uint3 id : SV_DispatchThreadID)
 
     int offset = idx * NUM_BUF_ELEMENTS;;
 
-    float depthArray[NUM_BUF_ELEMENTS];
+    float depthArray[NUM_BUF_ELEMENTS * SORTING_MULTIPLE];
 
     uint i;
     // Copy
-    for (i = 0; i < NUM_BUF_ELEMENTS; i++)
+    for (i = 0; i < NUM_BUF_ELEMENTS * SORTING_MULTIPLE; i++)
     {
-        depthArray[i] = DepthBuffer[offset+i] + 1/256.0;
+        depthArray[i] = DepthBuffer[offset+i];
     }
 
     float temp;
@@ -71,7 +72,7 @@ void KernelSortDepth(uint3 id : SV_DispatchThreadID)
 		for (i = 0; i < n; i++)
 		{
 			float x = (float)i / n;
-			float y = depthArray[i];
+			float y = depthArray[i * SORTING_MULTIPLE];
 			sumXY += x * y;
 			sumX += x;
 			sumY += y;
@@ -79,7 +80,7 @@ void KernelSortDepth(uint3 id : SV_DispatchThreadID)
 		}
 		float fx = (n * sumXX - sumX * sumX) / max(1E-6,(n * sumXY - sumX * sumY)); //Reciprocal
         float fy = sumY / n - sumX / fx / n;
-        float fz = depthArray[FittingBinsAcc[k]];
+        float fz = depthArray[FittingBinsAcc[k] * SORTING_MULTIPLE];
 		f[k] = float3(fx, fy, fz);
 	}
     func.f = f;
