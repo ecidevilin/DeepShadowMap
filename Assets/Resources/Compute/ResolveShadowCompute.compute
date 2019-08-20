@@ -1,0 +1,90 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel KernelScreenSpaceDeepShadowmap
+#pragma kernel KernelGaussianBlurShadow
+
+#include "../Include/DeepShadowMap.cginc"
+StructuredBuffer<int> NumberBuffer;
+StructuredBuffer<float2> DepthBuffer;
+
+
+Texture2D<float> _DepthTex;
+RWTexture2D<float4> _ShadowTex;
+
+uint _ScreenWidth;
+uint _ScreenHeight;
+float4x4 _CameraInvVP;
+float4x4 _LightVP;
+
+float _HairAlpha;
+
+Texture2D<float4> _SourceShadowTexture;
+RWTexture2D<float4> _BlurShadowTexture;
+uint _BlurStep;
+
+uint _AsDefaultShadowmap;
+
+[numthreads(8, 8, 1)]
+void KernelScreenSpaceDeepShadowmap(uint3 id : SV_DispatchThreadID)
+{
+	if (id.y >= _ScreenHeight || id.x >= _ScreenWidth)
+	{
+		return;
+	}
+	float depth = _DepthTex[id.xy];
+	if (depth > 0.999)
+	{
+		return;
+	}
+	float3 screenPos = float3(0, 0, depth);
+	screenPos.xy = id.xy / float2(_ScreenWidth, _ScreenHeight);
+	float4 ndcPos = float4(screenPos * 2 - 1, 1);
+	float4 worldPos = mul(_CameraInvVP, ndcPos);
+	worldPos /= worldPos.w;
+	float4 lightPos = mul(_LightVP, worldPos);
+	lightPos = lightPos * 0.5 + 0.5;
+	float ldepth = lightPos.z;
+	uint2 lightIdx = lightPos.xy * Dimension;
+	uint lidx = lightIdx.y * Dimension + lightIdx.x;
+	int num = NumberBuffer[lidx];
+	num = min(num, NUM_BUF_ELEMENTS);
+
+	int offset = lidx * NUM_BUF_ELEMENTS;
+
+	uint i;
+	float2 d;
+	float shading = 1;
+	for (i = 0; i < num; i++)
+	{
+		d = DepthBuffer[offset + i];
+		if (d.x < ldepth - 1 / 2048.0)
+		{
+			shading *= 1 - d.y;
+		}
+		if (shading < 0.001)
+		{
+			break;
+		}
+	}
+	_ShadowTex[id.xy] = shading;
+}
+
+[numthreads(8, 8, 1)]
+void KernelGaussianBlurShadow(uint3 id : SV_DispatchThreadID)
+{
+	if (id.y >= _ScreenHeight - _BlurStep || id.x >= _ScreenWidth - _BlurStep || id.y < _BlurStep || id.x < _BlurStep)
+	{
+		return;
+	}
+	uint3 offset = uint3(1, -1, 0) * _BlurStep;
+	float4 shade = _SourceShadowTexture[id.xy] * 4;
+	shade += _SourceShadowTexture[id.xy + offset.yy] * 1;
+	shade += _SourceShadowTexture[id.xy + offset.yz] * 2;
+	shade += _SourceShadowTexture[id.xy + offset.yx] * 1;
+	shade += _SourceShadowTexture[id.xy + offset.zy] * 2;
+	shade += _SourceShadowTexture[id.xy + offset.zx] * 2;
+	shade += _SourceShadowTexture[id.xy + offset.xy] * 1;
+	shade += _SourceShadowTexture[id.xy + offset.xz] * 2;
+	shade += _SourceShadowTexture[id.xy + offset.xx] * 1;
+	shade /= 16;
+	_BlurShadowTexture[id.xy] = shade;
+}

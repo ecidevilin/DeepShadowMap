@@ -1,11 +1,9 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel KernelResetNumberBuffer
 #pragma kernel KernelResetDepthBuffer
-#pragma kernel KernelResetRegressionBuffer
 #include "../Include/DeepShadowMap.cginc"
 RWStructuredBuffer<int> NumberBuffer;
-RWStructuredBuffer<float> DepthBuffer;
-RWStructuredBuffer<FittingFunc> RegressionBuffer;
+RWStructuredBuffer<float2> DepthBuffer;
 
 [numthreads(8,8,1)]
 void KernelResetNumberBuffer(uint3 id : SV_DispatchThreadID)
@@ -21,10 +19,4 @@ void KernelResetDepthBuffer(uint3 id : SV_DispatchThreadID)
 	{
 		DepthBuffer[NUM_BUF_ELEMENTS * (id.y * Dimension + id.x) + i] = 1;
 	}
-}
-
-[numthreads(8, 8, 1)]
-void KernelResetRegressionBuffer(uint3 id :SV_DispatchThreadID)
-{
-	RegressionBuffer[id.y * Dimension + id.x] = (FittingFunc)0;
 }

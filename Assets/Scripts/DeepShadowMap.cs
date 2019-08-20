@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 public class DeepShadowMap : MonoBehaviour
@@ -9,7 +10,6 @@ public class DeepShadowMap : MonoBehaviour
 
     private ComputeBuffer NumberBuffer;
     private ComputeBuffer DepthBuffer;
-    private ComputeBuffer RegressionBuffer;
 
     public Light DirectionalLight;
     public Material ShadowMapMaterial;
@@ -19,17 +19,21 @@ public class DeepShadowMap : MonoBehaviour
     public ComputeShader ResetCompute;
     private int KernelResetNumberBuffer;
     private int KernelResetDepthBuffer;
-    private int KernelResetRegressionBuffer;
 
-    public ComputeShader SortCompute;
-    private int KernelSortDepth;
+    private int KernelScreenSpaceDeepShadowmap;
+    private int KernelGaussianBlurShadow;
+    private RenderTexture _DepthTex;
+    private RenderTexture _ShadowTex;
+    private RenderTexture _BlurTex;
+
+    public ComputeShader ResolveCompute;
+    public Material DepthMaterial;
 
 #if UNITY_EDITOR
     public ComputeShader TestCompute;
     private int KernelResetTestResult;
     private int KernelTestNumberBuffer;
     private int KernelTestDepthBuffer;
-    private int KernelTestRegressionBuffer;
     public RenderTexture TestRenderTexture;
     [Range(0, 49)]
     public int TestIndex;
@@ -37,15 +41,16 @@ public class DeepShadowMap : MonoBehaviour
     {
         KernelTestNumberBuffer,
         KernelTestDepthBuffer,
-        KernelTestRegressionBuffer,
     }
     public ETestKernel TestKernel;
 #endif
     
     public Color HairColor;
 
-    const int dimension = 512;
+    const int dimension = 1024;
     const int elements = 32;
+
+    public bool _AsDefaultShadowmap = false;
 
     private void Start()
     {
@@ -58,53 +63,95 @@ public class DeepShadowMap : MonoBehaviour
         camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, AfterForwardOpaque);
 
         NumberBuffer = new ComputeBuffer(dimension * dimension, sizeof(uint));
-        DepthBuffer = new ComputeBuffer(numElement, sizeof(float));
-        RegressionBuffer = new ComputeBuffer(dimension * dimension, sizeof(float) * 12);
+        DepthBuffer = new ComputeBuffer(numElement, sizeof(float) * 2);
+
+        _DepthTex = new RenderTexture(Screen.width, Screen.height, 16, RenderTextureFormat.Depth, RenderTextureReadWrite.Linear);
+        _DepthTex.Create();
+        _ShadowTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear)
+        {
+            enableRandomWrite = true,
+        };
+        _ShadowTex.Create();
+        _BlurTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear)
+        {
+            enableRandomWrite = true,
+        };
+        _BlurTex.Create();
 
         KernelResetNumberBuffer = ResetCompute.FindKernel("KernelResetNumberBuffer");
         KernelResetDepthBuffer = ResetCompute.FindKernel("KernelResetDepthBuffer");
-        KernelResetRegressionBuffer = ResetCompute.FindKernel("KernelResetRegressionBuffer");
 
         ResetCompute.SetInt("Dimension", dimension);
         ResetCompute.SetBuffer(KernelResetNumberBuffer, "NumberBuffer", NumberBuffer);
         ResetCompute.SetBuffer(KernelResetDepthBuffer, "DepthBuffer", DepthBuffer);
-        ResetCompute.SetBuffer(KernelResetRegressionBuffer, "RegressionBuffer", RegressionBuffer);
 
         ResetCompute.Dispatch(KernelResetNumberBuffer, dimension / 8, dimension / 8, 1);
 
-        KernelSortDepth = SortCompute.FindKernel("KernelSortDepth");
-        SortCompute.SetInt("Dimension", dimension);
-        SortCompute.SetBuffer(KernelSortDepth, "NumberBuffer", NumberBuffer);
-        SortCompute.SetBuffer(KernelSortDepth, "DepthBuffer", DepthBuffer);
-        SortCompute.SetBuffer(KernelSortDepth, "RegressionBuffer", RegressionBuffer);
+        KernelScreenSpaceDeepShadowmap = ResolveCompute.FindKernel("KernelScreenSpaceDeepShadowmap");
+        KernelGaussianBlurShadow = ResolveCompute.FindKernel("KernelGaussianBlurShadow");
 
-#if UNITY_EDITOR
+        ResolveCompute.SetInt("Dimension", dimension);
+        ResolveCompute.SetBuffer(KernelScreenSpaceDeepShadowmap, "NumberBuffer", NumberBuffer);
+        ResolveCompute.SetBuffer(KernelScreenSpaceDeepShadowmap, "DepthBuffer", DepthBuffer);
+        ResolveCompute.SetTexture(KernelScreenSpaceDeepShadowmap, "_DepthTex", _DepthTex);
+        ResolveCompute.SetTexture(KernelScreenSpaceDeepShadowmap, "_ShadowTex", _ShadowTex);
+
+#if UNITY_EDITOR && DEBUG_DSM
         KernelResetTestResult = TestCompute.FindKernel("KernelResetTestResult");
         KernelTestNumberBuffer = TestCompute.FindKernel("KernelTestNumberBuffer");
         KernelTestDepthBuffer = TestCompute.FindKernel("KernelTestDepthBuffer");
-        KernelTestRegressionBuffer = TestCompute.FindKernel("KernelTestRegressionBuffer");
         TestCompute.SetInt("Dimension", dimension);
         TestCompute.SetBuffer(KernelTestNumberBuffer, "NumberBuffer", NumberBuffer);
         TestCompute.SetBuffer(KernelTestDepthBuffer, "DepthBuffer", DepthBuffer);
-        TestCompute.SetBuffer(KernelTestRegressionBuffer, "RegressionBuffer", RegressionBuffer);
         TestRenderTexture.enableRandomWrite = true;
         TestCompute.SetTexture(KernelResetTestResult, "TestRenderTexture", TestRenderTexture);
         TestCompute.SetTexture(KernelTestNumberBuffer, "TestRenderTexture", TestRenderTexture);
         TestCompute.SetTexture(KernelTestDepthBuffer, "TestRenderTexture", TestRenderTexture);
-        TestCompute.SetTexture(KernelTestRegressionBuffer, "TestRenderTexture", TestRenderTexture);
 
 #endif
         Shader.SetGlobalBuffer("NumberBuffer", NumberBuffer);
         Shader.SetGlobalBuffer("DepthBuffer", DepthBuffer);
-        Shader.SetGlobalBuffer("RegressionBuffer", RegressionBuffer);
         Shader.SetGlobalInt("Dimension", dimension);
     }
-
-    int p = 0;
 
     private void Update()
     {
         BeforeForwardOpaque.Clear();
+
+        Renderer[] renderers = FindObjectsOfType<Renderer>();
+
+        BeforeForwardOpaque.BeginSample("DepthOnly");
+        BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
+        BeforeForwardOpaque.SetProjectionMatrix(camera.projectionMatrix);
+        BeforeForwardOpaque.SetRenderTarget(_DepthTex);
+        BeforeForwardOpaque.ClearRenderTarget(true, true, Color.black);
+        for (int i = 0, imax = renderers.Length; i < imax; i++)
+        {
+            Renderer rend = renderers[i];
+            if (rend.shadowCastingMode != ShadowCastingMode.Off)
+            {
+                //casterAABBs.Add(rend.bounds);
+                if (BoundsUtils.IntersectFrustum(rend.bounds, rend.localToWorldMatrix, Camera.main.cullingMatrix))
+                {
+                    for (int m = 0, mmax = rend.sharedMaterials.Length; m < mmax; m++)
+                    {
+                        var mat = rend.sharedMaterial; // "sharedMaterials" cases bugs;
+                        int pass = mat.FindPass("DepthOnly");
+                        if (pass < 0)
+                        {
+                            BeforeForwardOpaque.DrawRenderer(rend, DepthMaterial, m, 0);
+                        }
+                        else
+                        {
+                            BeforeForwardOpaque.DrawRenderer(rend, mat, m, pass);
+                        }
+                        mat.SetShaderPassEnabled("DepthOnly", false);
+                    }
+                }
+            }
+        }
+        BeforeForwardOpaque.EndSample("DepthOnly");
+
 
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.None);
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
@@ -117,7 +164,7 @@ public class DeepShadowMap : MonoBehaviour
             lightMatrix.SetRow(2, -forward);
         }
         BeforeForwardOpaque.SetViewMatrix(lightMatrix);
-        Matrix4x4 projMatrix = Matrix4x4.Ortho(-1, 1, -1, 1, 0.1f, 10);
+        Matrix4x4 projMatrix = Matrix4x4.Ortho(-0.5f, 0.5f, -0.5f, 0.5f, 0.1f, 10);
         BeforeForwardOpaque.SetProjectionMatrix(projMatrix);
         BeforeForwardOpaque.SetViewport(new Rect(0, 0, dimension, dimension));
 
@@ -132,7 +179,6 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetGlobalFloat("_HairAlpha", HairAlpha);
 
         BeforeForwardOpaque.BeginSample("ShadowMapMaterial");
-        Renderer[] renderers = FindObjectsOfType<Renderer>();
         for (int i = 0, imax = renderers.Length; i < imax; i++)
         {
             Renderer rend = renderers[i];
@@ -143,7 +189,17 @@ public class DeepShadowMap : MonoBehaviour
                 {
                     for (int m = 0, mmax = rend.sharedMaterials.Length; m < mmax; m++)
                     {
-                        BeforeForwardOpaque.DrawRenderer(rend, ShadowMapMaterial, m, 0);
+                        var mat = rend.sharedMaterial; // "sharedMaterials" cases bugs;
+                        int pass = mat.FindPass("DeepShadowCaster");
+                        if (pass < 0)
+                        {
+                            BeforeForwardOpaque.DrawRenderer(rend, ShadowMapMaterial, m, 0);
+                        }
+                        else
+                        {
+                            BeforeForwardOpaque.DrawRenderer(rend, mat, m, pass);
+                        }
+                        mat.SetShaderPassEnabled("DeepShadowCaster", false);
                     }
                 }
             }
@@ -151,9 +207,41 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.ClearRenderTarget(true, true, Color.black);
         BeforeForwardOpaque.EndSample("ShadowMapMaterial");
 
+        BeforeForwardOpaque.SetRenderTarget(_ShadowTex);
+        BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
+        BeforeForwardOpaque.SetComputeIntParam(ResolveCompute, "_ScreenWidth", Screen.width);
+        BeforeForwardOpaque.SetComputeIntParam(ResolveCompute, "_ScreenHeight", Screen.height);
+        BeforeForwardOpaque.SetComputeMatrixParam(ResolveCompute, "_CameraInvVP", camera.cullingMatrix.inverse);
+        BeforeForwardOpaque.SetComputeMatrixParam(ResolveCompute, "_LightVP", projMatrix * lightMatrix);
 
-        BeforeForwardOpaque.DispatchCompute(SortCompute, KernelSortDepth, dimension / 8, dimension / 8, 1);
-        
+        BeforeForwardOpaque.SetComputeIntParam(ResolveCompute, "_AsDefaultShadowmap", _AsDefaultShadowmap ? 1 : 0);
+
+        BeforeForwardOpaque.DispatchCompute(ResolveCompute, KernelScreenSpaceDeepShadowmap, (7 + Screen.width) / 8, (7 + Screen.height) / 8, 1);
+
+
+        BeforeForwardOpaque.SetRenderTarget(_BlurTex);
+        BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
+        BeforeForwardOpaque.SetComputeIntParam(ResolveCompute, "_BlurStep", 1);
+        BeforeForwardOpaque.SetComputeTextureParam(ResolveCompute, KernelGaussianBlurShadow, "_SourceShadowTexture", _ShadowTex);
+        BeforeForwardOpaque.SetComputeTextureParam(ResolveCompute, KernelGaussianBlurShadow, "_BlurShadowTexture", _BlurTex);
+        BeforeForwardOpaque.DispatchCompute(ResolveCompute, KernelGaussianBlurShadow, (7 + Screen.width) / 8, (7 + Screen.height) / 8, 1);
+
+        //BeforeForwardOpaque.SetRenderTarget(_ShadowTex);
+        //BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
+        //BeforeForwardOpaque.SetComputeIntParam(ResolveCompute, "_BlurStep", 2);
+        //BeforeForwardOpaque.SetComputeTextureParam(ResolveCompute, KernelGaussianBlurShadow, "_SourceShadowTexture", _BlurTex);
+        //BeforeForwardOpaque.SetComputeTextureParam(ResolveCompute, KernelGaussianBlurShadow, "_BlurShadowTexture", _ShadowTex);
+        //BeforeForwardOpaque.DispatchCompute(ResolveCompute, KernelGaussianBlurShadow, (7 + Screen.width) / 8, (7 + Screen.height) / 8, 1);
+
+        //BeforeForwardOpaque.SetRenderTarget(_BlurTex);
+        //BeforeForwardOpaque.ClearRenderTarget(true, true, Color.white);
+        //BeforeForwardOpaque.SetComputeIntParam(ResolveCompute, "_BlurStep", 4);
+        //BeforeForwardOpaque.SetComputeTextureParam(ResolveCompute, KernelGaussianBlurShadow, "_SourceShadowTexture", _ShadowTex);
+        //BeforeForwardOpaque.SetComputeTextureParam(ResolveCompute, KernelGaussianBlurShadow, "_BlurShadowTexture", _BlurTex);
+        //BeforeForwardOpaque.DispatchCompute(ResolveCompute, KernelGaussianBlurShadow, (7 + Screen.width) / 8, (7 + Screen.height) / 8, 1);
+
+        BeforeForwardOpaque.SetGlobalTexture("_BlurShadowTexture", _BlurTex);
+
         BeforeForwardOpaque.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
 
         BeforeForwardOpaque.SetViewMatrix(camera.worldToCameraMatrix);
@@ -164,7 +252,7 @@ public class DeepShadowMap : MonoBehaviour
         BeforeForwardOpaque.SetGlobalColor("_HairColor", HairColor);
 
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && DEBUG_DSM
         BeforeForwardOpaque.DispatchCompute(TestCompute, KernelResetTestResult, dimension / 8, dimension / 8, 1);
         BeforeForwardOpaque.SetComputeIntParam(TestCompute, "TestIndex", TestIndex);
         if (TestKernel == ETestKernel.KernelTestNumberBuffer)
@@ -176,22 +264,15 @@ public class DeepShadowMap : MonoBehaviour
             BeforeForwardOpaque.DispatchCompute(TestCompute, KernelTestDepthBuffer, dimension / 8, dimension / 8, 1);
 
         }
-        else if (TestKernel == ETestKernel.KernelTestRegressionBuffer)
-        {
-            BeforeForwardOpaque.DispatchCompute(TestCompute, KernelTestRegressionBuffer, dimension / 8, dimension / 8, 1);
-        }
 #endif
         AfterForwardOpaque.Clear();
         AfterForwardOpaque.DispatchCompute(ResetCompute, KernelResetDepthBuffer, dimension / 8, dimension / 8, 1);
-        AfterForwardOpaque.DispatchCompute(ResetCompute, KernelResetRegressionBuffer, dimension / 8, dimension / 8, 1);
         AfterForwardOpaque.DispatchCompute(ResetCompute, KernelResetNumberBuffer, dimension / 8, dimension / 8, 1);
-
     }
 
     private void OnDestroy()
     {
         DepthBuffer.Dispose();
         NumberBuffer.Dispose();
-        RegressionBuffer.Dispose();
     }
 }

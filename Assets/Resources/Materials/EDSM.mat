@@ -13,27 +13,34 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
-  disabledShaderPasses: []
+  disabledShaderPasses:
+  - DepthOnly
+  - DeepShadowCaster
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 8afab1b844c5bdb4d9a4842aca3d807a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _NoiseTex:
-        m_Texture: {fileID: 2800000, guid: 9889a33a645c7b649a95e57e73910a90, type: 3}
+        m_Texture: {fileID: 2800000, guid: 1f4151dcf520d214da879521071359c0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ShiftTex:
-        m_Texture: {fileID: 2800000, guid: 31f8fcb583603634087b99ea6fb5e8aa, type: 3}
+        m_Texture: {fileID: 2800000, guid: 06bb8de7384c1304fa2548ca89de2839, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _AmbientScale: 0.125
-    - _Diffuse: 0.25
+    - _AmbientScale: 0.1
+    - _ClipAlpha: 0.1
+    - _Diffuse: 1
     - _PrimaryShift: 1
-    - _PrimarySpecular: 100
-    - _SecondaryShift: 0.75
-    - _SecondarySpecular: 100
+    - _PrimarySpecular: -1
+    - _SecondaryShift: 1.5
+    - _SecondarySpecular: -1
     m_Colors:
-    - _PrimarySpecularColor: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 0.25}
-    - _SecondarySpecularColor: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 0.25}
+    - _PrimarySpecularColor: {r: 1, g: 1, b: 1, a: 0.25}
+    - _SecondarySpecularColor: {r: 0.9056604, g: 0.71082854, b: 0.41438237, a: 0.25}

@@ -7,7 +7,7 @@
     {
         Tags { "RenderType"="Opaque" }
 
-		Cull Off
+		Cull Back
 		ZTest Off
         Pass
         {
@@ -19,7 +19,7 @@
             #include "UnityCG.cginc"
             #include "../Include/DeepShadowMap.cginc"
 			RWStructuredBuffer<uint> NumberBuffer;
-			RWStructuredBuffer<float> DepthBuffer;
+			RWStructuredBuffer<float2> DepthBuffer;
 			float4x4 _LightVP;
 
             struct appdata
@@ -50,7 +50,8 @@
 				uint originalVal;
 				InterlockedAdd(NumberBuffer[idx], 1, originalVal);
 				originalVal = min(NUM_BUF_ELEMENTS - 1, originalVal);
-				DepthBuffer[offset + originalVal] = posInLight.z;
+				DepthBuffer[offset + originalVal].x = posInLight.z;
+				DepthBuffer[offset + originalVal].y = 1;
 
                 return fixed4(posInLight.z, 0, 0, 1);
 

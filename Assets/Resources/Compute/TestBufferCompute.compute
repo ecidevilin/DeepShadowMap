@@ -2,13 +2,11 @@
 #pragma kernel KernelResetTestResult
 #pragma kernel KernelTestNumberBuffer
 #pragma kernel KernelTestDepthBuffer
-#pragma kernel KernelTestRegressionBuffer
 
 #include "../Include/DeepShadowMap.cginc"
 
 StructuredBuffer<int> NumberBuffer;
-StructuredBuffer<float> DepthBuffer;
-StructuredBuffer<FittingFunc> RegressionBuffer;
+StructuredBuffer<float2> DepthBuffer;
 RWTexture2D<float4> TestRenderTexture;
 int TestIndex;
 
@@ -36,13 +34,5 @@ void KernelTestNumberBuffer(uint3 id : SV_DispatchThreadID)
 void KernelTestDepthBuffer(uint3 id : SV_DispatchThreadID)
 {
     float depth = DepthBuffer[(id.y * Dimension + id.x) * NUM_BUF_ELEMENTS + TestIndex];
-	TestRenderTexture[id.xy] = float4(depth, 0, 0, 1);
-}
-
-[numthreads(8, 8, 1)]
-void KernelTestRegressionBuffer(uint3 id : SV_DispatchThreadID)
-{
-	FittingFunc func = RegressionBuffer[id.y * Dimension + id.x];
-	float3 f = func.f[(uint)TestIndex % 4];
-	TestRenderTexture[id.xy] = float4((f.xy), abs(f.y)-f.y, 1);
+	TestRenderTexture[id.xy] = float4(depth, 0, 1);
 }
