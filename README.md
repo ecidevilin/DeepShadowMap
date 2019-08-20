@@ -1,18 +1,6 @@
 # DeepShadowMap
 
-![45](Pic/Hair2.png)
-
-![Front](Pic/Hair3.png)
-
-![Back](Pic/Hair4.png)
-
-![gif](Pic/greenHairSmall.gif)
-
-## On iPhone XS
-
-![ipxs](Pic/ipxs2.png)
-
-There are only 30 FPS on iphone XS. Mostly because the complex geometry takes a lot of gpu time on culling.
+![SSDSM](Pic/DeepShadowMaps.png)
 
 # Reference
 
